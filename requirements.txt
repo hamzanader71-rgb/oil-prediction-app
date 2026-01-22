@@ -1,7 +1,5 @@
 streamlit
 pandas
-numpy
+sqlalchemy
 plotly
-twilio
-
-
+openpyxl
