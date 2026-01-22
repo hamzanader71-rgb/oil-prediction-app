@@ -1,53 +1,101 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+from sqlalchemy import create_engine
+import hashlib
+from datetime import datetime
 
-# إعدادات المنصة (صفحة التنبؤ الرئيسية)
-st.set_page_config(page_title="Hamza Production Forecasting", layout="wide")
+# ----------------------
+# إعداد قاعدة البيانات
+# ----------------------
+engine = create_engine("sqlite:///petroleum_db.db", echo=False)
 
-# تصميم UI عالي التقنية
-st.markdown("""
-    <style>
-    .stApp { background: #00050a; color: #00ffcc; }
-    .stMetric { background: #0a1420; padding: 20px; border-radius: 15px; border-top: 4px solid #00ffcc; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-    </style>
-    """, unsafe_allow_html=True)
+# إنشاء الجداول الأساسية
+with engine.connect() as conn:
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        role TEXT
+    )
+    """)
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS production_data (
+        Well_Name TEXT,
+        Date DATE,
+        Oil_Rate REAL,
+        Gas_Rate REAL,
+        Water_Rate REAL
+    )
+    """)
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS audit_log (
+        username TEXT,
+        action TEXT,
+        timestamp DATETIME
+    )
+    """)
+    # إضافة Admin افتراضي
+    res = conn.execute("SELECT * FROM users WHERE username='admin'").fetchall()
+    if not res:
+        conn.execute(
+            "INSERT INTO users (username,password,role) VALUES (:u,:p,:r)",
+            {"u": "admin", "p": hashlib.sha256("admin123".encode()).hexdigest(), "r": "Admin"}
+        )
 
-st.title("🔮 محرك التنبؤ والتحليل الفني (Forecasting Hub)")
+# ----------------------
+# وظائف الأمان
+# ----------------------
+def hash_pass(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
-# القائمة الجانبية للتنبؤ فقط
-with st.sidebar:
-    st.title("🛡️ Hamza Forecast")
-    forecast_menu = st.radio("اختر نوع التحليل:", [
-        "📉 تحليل العقد (Nodal Analysis)",
-        "🔮 التنبؤ بالإنتاج والمالية"
-    ])
+def authenticate(username, password):
+    hashed = hash_pass(password)
+    df = pd.read_sql(f"SELECT role FROM users WHERE username='{username}' AND password='{hashed}'", engine)
+    return None if df.empty else df.iloc[0]["role"]
 
-# --- 1. تحليل العقد (IPR vs VLP) ---
-if forecast_menu == "📉 تحليل العقد (Nodal Analysis)":
-    st.subheader("📉 System Analysis (IPR vs VLP)")
-    q = np.linspace(10, 6000, 100)
-    pr = st.slider("Reservoir Pressure (psi)", 2000, 6000, 4000)
-    ipr = pr * (1 - 0.2*(q/6000) - 0.8*(q/6000)**2)
-    vlp = 800 + 0.00015 * q**2
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=q, y=ipr, name="IPR (Inflow)", line=dict(color='#00ffcc', width=4)))
-    fig.add_trace(go.Scatter(x=q, y=vlp, name="VLP (Outflow)", line=dict(color='#ff4b4b', width=4)))
-    st.plotly_chart(fig, use_container_width=True)
-    
+def log_action(username, action):
+    pd.DataFrame([{
+        "username": username,
+        "action": action,
+        "timestamp": datetime.now()
+    }]).to_sql("audit_log", engine, if_exists="append", index=False)
 
-# --- 2. التنبؤ بالإنتاج والمالية ---
-else:
-    st.subheader("💰 Production Economics & Decline Curve")
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        qi = st.number_input("الإنتاج الابتدائي (bpd)", 3500)
-        di = st.slider("معدل الهبوط سنوي (%)", 1, 40, 15)
-        st.metric("Daily Revenue ($)", f"{qi * 85:,.0f}")
-    
-    with col2:
-        t = np.arange(0, 60)
-        qt = qi * np.exp(-(di/100/12) * t)
-        st.area_chart(qt)
+# ----------------------
+# واجهة المستخدم
+# ----------------------
+st.title("📦 Data Foundation System")
+
+# تسجيل الدخول
+username = st.text_input("Username")
+password = st.text_input("Password", type="password")
+role = authenticate(username, password)
+
+if not role:
+    st.warning("Login required | admin / admin123")
+    st.stop()
+
+st.success(f"Logged in as {role}")
+
+# رفع البيانات
+uploaded_file = st.file_uploader("Upload CSV or Excel", ["csv", "xlsx"])
+if uploaded_file and st.button("Process & Save"):
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_excel(uploaded_file)
+
+    # تنظيف البيانات
+    df.dropna(how="all", inplace=True)
+    df.drop_duplicates(inplace=True)
+
+    # التحقق من الأعمدة
+    required = ["Well_Name","Date","Oil_Rate"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        st.error(f"Missing columns: {missing}")
+    else:
+        df.to_sql("production_data", engine, if_exists="append", index=False)
+        log_action(username,"Uploaded production data")
+        st.success("Data saved successfully")
+        st.dataframe(df.head())
