@@ -1,100 +1,105 @@
 import streamlit as st
 from streamlit_mic_recorder import mic_recorder
+import datetime
+import webbrowser
 import time
 
-# --- إعدادات نظام جارفيس التفاعلي V8.0 ---
-st.set_page_config(page_title="JARVIS v8 - LIVE INTERACTION", layout="wide", page_icon="🎙️")
+# --- إعدادات النسخة الجبارة V9 ---
+st.set_page_config(page_title="JARVIS SYSTEM - HAMZA", layout="wide")
 
-# --- محرك الصوت المصري (The Voice of Jarvis) ---
-def jarvis_speak(text):
+# --- محرك الصوت (المصري المحسن) ---
+def speak(text):
     b64_text = text.replace("'", "\\'")
     js = f"""
     <script>
         var msg = new SpeechSynthesisUtterance('{b64_text}');
-        msg.lang = 'ar-EG'; 
-        msg.pitch = 0.9; 
-        msg.rate = 1.0; 
+        msg.lang = 'ar-EG'; msg.pitch = 1.0; msg.rate = 1.0;
         window.speechSynthesis.speak(msg);
     </script>
     """
     st.components.v1.html(js, height=0)
 
-# --- محرك التفاعل والرد الذكي (Automation Core) ---
-def handle_action(command, user):
+# --- معالجة الأوامر (المنطق اللي إنت بعته) ---
+def process_hamza_logic(command):
     cmd = command.lower()
-    
-    # 1. أوامر البحث الذكي
-    if any(x in cmd for x in ["بحث", "جوجل", "google", "search"]):
-        target = cmd.replace("google", "").replace("ابحث عن", "").replace("بحث", "").strip()
-        jarvis_speak(f"تمام يا مستر {user}، هجيبلك قرار {target} من على جوجل حالا.")
-        with st.spinner(f"جاري تنفيذ طلبك يا {user}..."):
-            time.sleep(3) # وقت كافي عشان تسمع الرد وتستعد
-            st.markdown(f'<meta http-equiv="refresh" content="0;url=https://www.google.com/search?q={target}">', unsafe_allow_html=True)
-    
-    # 2. أوامر الذكاء الاصطناعي
-    elif any(x in cmd for x in ["شات", "chat", "ذكاء"]):
-        jarvis_speak(f"من عيوني يا ريس، بفتحلك واجهة الذكاء الاصطناعي دلوقت.")
-        with st.spinner("Loading AI Core..."):
-            time.sleep(3)
-            st.markdown(f'<meta http-equiv="refresh" content="0;url=https://chat.openai.com">', unsafe_allow_html=True)
+    user = st.session_state.current_user
 
-    # 3. الدردشة التفاعلية
-    elif any(x in cmd for x in ["يا جارفيس", "إزيك", "عامل إيه", "مين"]):
-        jarvis_speak(f"أنا زي الفل يا ريس طول ما إنت تمام. أنا جارفيس، دراعك اليمين ومستعد لأي مأمورية.")
+    # 1. الوقت والتاريخ
+    if "الوقت" in cmd:
+        now = datetime.datetime.now().strftime("%I:%M %p")
+        speak(f"الوقت دلوقتي {now} يا مستر {user}")
+    
+    elif "التاريخ" in cmd:
+        today = datetime.date.today()
+        speak(f"النهارده {today} يا ريس")
 
-# --- التصميم السينمائي HUD (Neon Orb) ---
+    # 2. يوتيوب (pywhatkit logic)
+    elif "شغل" in cmd:
+        query = cmd.replace("شغل", "").strip()
+        speak(f"من عيوني، هشغلك {query} على يوتيوب حالا")
+        time.sleep(2)
+        st.markdown(f'<meta http-equiv="refresh" content="0;url=https://www.youtube.com/results?search_query={query}">', unsafe_allow_html=True)
+
+    # 3. ويكيبيديا والبحث
+    elif "بحث" in cmd or "معلومات عن" in cmd:
+        query = cmd.replace("بحث", "").replace("عن", "").strip()
+        speak(f"بدوّرلك على {query} في الموسوعة يا مستر {user}")
+        time.sleep(2)
+        st.markdown(f'<meta http-equiv="refresh" content="0;url=https://ar.wikipedia.org/wiki/{query}">', unsafe_allow_html=True)
+
+    # 4. فتح المواقع
+    elif "افتح" in cmd:
+        if "جوجل" in cmd:
+            speak("بفتحلك جوجل يا باشا")
+            st.markdown('<meta http-equiv="refresh" content="0;url=https://www.google.com">', unsafe_allow_html=True)
+        elif "فيسبوك" in cmd:
+            speak("حاضر، بفتح الفيسبوك")
+            st.markdown('<meta http-equiv="refresh" content="0;url=https://www.facebook.com">', unsafe_allow_html=True)
+
+    # 5. الملاحظات
+    elif "ملاحظة" in cmd or "اكتب" in cmd:
+        speak("أنا سجلت الملاحظة دي عندي في الذاكرة يا ريس")
+        st.session_state.notes.append(f"{datetime.datetime.now()}: {cmd}")
+
+# --- التصميم (HUD Interface) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-    .stApp { background: radial-gradient(circle, #001529 0%, #000 100%); color: #00f2ff; font-family: 'Segoe UI', sans-serif; }
-    [data-testid="stSidebar"] { background-color: #0a1016 !important; border-right: 1px solid #00f2ff; }
-    .jarvis-orb { 
-        border: 10px double #00f2ff; border-radius: 50%; width: 200px; height: 200px; 
-        margin: auto; box-shadow: 0 0 50px #00f2ff;
-        background: url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndnB3ZzRyeGZ6ZzRyeGZ6ZzRyeGZ6ZzRyeGZ6ZzRyeGZ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9iYyZjdD1n/3o7TKVUn7iM8FMEU24/giphy.gif');
-        background-size: cover; background-position: center;
-        animation: pulse 2s infinite alternate;
+    .stApp { background: #000; color: #00f2ff; }
+    .core-node { 
+        border: 5px solid #00f2ff; border-radius: 50%; width: 180px; height: 180px; 
+        margin: auto; box-shadow: 0 0 40px #00f2ff; 
+        background: radial-gradient(circle, #005566 0%, #000 80%);
+        animation: rotate 5s linear infinite;
     }
-    @keyframes pulse { from { transform: scale(1); box-shadow: 0 0 20px #00f2ff; } to { transform: scale(1.05); box-shadow: 0 0 80px #00f2ff; } }
-    h1, h2 { font-family: 'Orbitron', sans-serif; text-shadow: 0 0 15px #00f2ff; }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
     """, unsafe_allow_html=True)
 
-# --- إدارة الذاكرة (حمزة مسجل دائم) ---
-if 'current_user' not in st.session_state:
-    st.session_state.current_user = "حمزة"
-if 'greeted' not in st.session_state:
-    st.session_state.greeted = False
+# --- إدارة الذاكرة ---
+if 'current_user' not in st.session_state: st.session_state.current_user = "حمزة"
+if 'notes' not in st.session_state: st.session_state.notes = []
+if 'greeted' not in st.session_state: st.session_state.greeted = False
 
-# الترحيب التلقائي عند التشغيل
+# الترحيب
 if not st.session_state.greeted:
-    jarvis_speak(f"أحلى مسا عليك يا مستر {st.session_state.current_user}. كل الأنظمة تحت أمرك، اؤمرني أعملك إيه؟")
+    speak(f"النظام في الخدمة. أهلاً بك يا مستر حمزة")
     st.session_state.greeted = True
 
-# الواجهة الرئيسية
-st.markdown("<br><div class='jarvis-orb'></div>", unsafe_allow_html=True)
-st.markdown(f"<h1 style='text-align: center;'>JARVIS V8: {st.session_state.current_user.upper()}</h1>", unsafe_allow_html=True)
+# الواجهة
+st.markdown("<div class='core-node'></div>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center;'>HAMZA COMMAND CENTER</h2>", unsafe_allow_html=True)
 
-# مركز الأوامر الجانبي
-st.sidebar.title("🎙️ مركز التحكم")
-audio = mic_recorder(start_prompt="اتكلم يا ريس", stop_prompt="إنهاء", key='jarvis_engine')
+# الميكروفون (الاستماع)
+st.sidebar.title("🎙️ LIVE MICROPHONE")
+audio_data = mic_recorder(start_prompt="اتكلم يا ريس", stop_prompt="فهمت خلاص", key='main_mic')
 
-st.sidebar.markdown("---")
-manual_input = st.sidebar.text_input("اكتب أمرك هنا وجارفيس هيرد عليك")
-if manual_input:
-    handle_action(manual_input, st.session_state.current_user)
+# تنفيذ الأوامر (لو كتبت أو اتكلمت)
+manual_cmd = st.sidebar.text_input("أمر يدوي (زي الكود اللي بعته)")
+if manual_cmd:
+    process_hamza_logic(manual_cmd)
 
-# روابط الوصول السريع
-st.sidebar.subheader("🚀 Quick Access")
-st.sidebar.link_button("Open ChatGPT", "https://chat.openai.com")
-st.sidebar.link_button("Google Search", "https://www.google.com")
-
-# لوحة البيانات
-t1, t2, t3 = st.tabs(["🚀 Command Center", "📊 Analytics", "🔐 Vault"])
-with t1:
-    st.info(f"مرحباً يا مستر {st.session_state.current_user}.. أنا في وضع الاستعداد الدائم.")
-    st.metric("الحالة الصحية للنظام", "100%", delta="Secure")
-
-if st.sidebar.button("Restart JARVIS"):
-    st.session_state.greeted = False
-    st.rerun()
+# عرض الملاحظات (زي خاصية الملاحظات في كودك)
+if st.session_state.notes:
+    with st.expander("📝 الملاحظات المسجلة"):
+        for n in st.session_state.notes:
+            st.write(n)
