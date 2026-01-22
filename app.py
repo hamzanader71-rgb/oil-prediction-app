@@ -1,103 +1,104 @@
 import streamlit as st
+import sys
+import os
+from io import StringIO
 
-# --- إعدادات النسخة الأنيقة V12 ---
-st.set_page_config(page_title="THE SLEEK BEAST", layout="wide", page_icon="🌑")
+# --- إعدادات النسخة V15 ---
+st.set_page_config(page_title="BEAST PERSISTENT", layout="wide", page_icon="💾")
 
-# --- التصميم الهادئ والمختصر (Minimalist Pro UI) ---
+MASTER_PASSWORD = "root" 
+
+# --- وظائف حفظ واسترجاع الأكواد من ملفات ---
+def save_code(page_name, code):
+    with open(f"{page_name}_code.txt", "w", encoding="utf-8") as f:
+        f.write(code)
+
+def load_code(page_name):
+    filename = f"{page_name}_code.txt"
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            return f.read()
+    return ""
+
+# --- التصميم الاحترافي ---
 st.markdown("""
     <style>
     .stApp { background-color: #0b0e14; color: #ffffff; }
-    
-    /* تصميم زرار فتح القائمة الجبار */
-    .stButton>button { 
-        border-radius: 50px; 
-        background: linear-gradient(90deg, #1c2128, #3e4451);
-        color: #00f2ff; border: 1px solid #00f2ff;
-        padding: 10px 25px; font-weight: bold; transition: 0.4s;
-    }
-    .stButton>button:hover { 
-        background: #00f2ff; color: #000; box-shadow: 0 0 20px #00f2ff;
-    }
-    
-    /* ستايل الدوائر الصغيرة داخل القائمة */
-    .ai-circle-small {
-        width: 60px; height: 60px;
-        border-radius: 50%; border: 1px solid #3e4451;
-        display: flex; align-items: center; justify-content: center;
-        margin: auto; background: #1c2128;
-    }
-    .ai-label { text-align: center; font-size: 11px; margin-top: 5px; color: #8b949e; }
+    [data-testid="stSidebar"] { background-color: #161b22 !important; border-right: 1px solid #3e4451; }
+    .project-header { color: #00f2ff; border-bottom: 2px solid #3e4451; padding-bottom: 10px; font-family: 'Orbitron'; }
+    .stTextArea textarea { background-color: #000000 !important; color: #00ff00 !important; font-family: 'Courier New', monospace; border: 1px solid #00f2ff !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- إدارة الدخول ---
-if 'auth' not in st.session_state: st.session_state.auth = False
+# --- نظام الدخول ---
+if 'authenticated' not in st.session_state: st.session_state.authenticated = False
 
-# --- شاشة تسجيل الدخول ---
-if not st.session_state.auth:
+if not st.session_state.authenticated:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         st.markdown("<div style='text-align: center; background: #1c2128; padding: 40px; border-radius: 20px; border: 1px solid #3e4451;'>", unsafe_allow_html=True)
-        st.image("https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png", width=100)
-        st.subheader("Login to System")
-        if st.button("Sign in with Google"):
-            st.session_state.auth = True
-            st.rerun()
+        st.header("Master Access")
+        pwd_input = st.text_input("Security Code", type="password")
+        if st.button("Unlock"):
+            if pwd_input == MASTER_PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else: st.error("Access Denied")
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- الواجهة الرئيسية الأنيقة ---
 else:
-    # هيدر بسيط جداً
-    c1, c2 = st.columns([8, 1])
-    with c2:
-        if st.button("Exit"):
-            st.session_state.auth = False
-            st.rerun()
+    # --- القائمة الجانبية (10 صفحات) ---
+    st.sidebar.title("🎮 Command Center")
+    page = st.sidebar.selectbox("Go to Page:", 
+                               ["Home"] + [f"Project_{i}" for i in range(1, 11)])
 
-    # شاشة الترحيب الرئيسية (الفراغ الأنيق)
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; font-size: 50px;'>BEAST SYSTEM</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #8b949e;'>Welcome Master Hamza. Systems are idle.</p>", unsafe_allow_html=True)
+    with st.sidebar.expander("🤖 AI & Tools"):
+        st.link_button("ChatGPT", "https://chat.openai.com")
+        st.link_button("Gemini", "https://gemini.google.com")
+        st.link_button("DeepSeek", "https://chat.deepseek.com")
+
+    if st.sidebar.button("🔴 Lock"):
+        st.session_state.authenticated = False
+        st.rerun()
+
+    # --- محتوى الصفحات ---
+    if page == "Home":
+        st.markdown("<h1 class='project-header'>Main Dashboard</h1>", unsafe_allow_html=True)
+        st.info(f"مرحباً يا مستر حمزة. الكود اللي هتكتبه في أي مشروع هيفضل محفوظ باسم الصفحة.")
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # الزرار السحري اللي بيفتح كل حاجة
-    col_btn1, col_btn2, col_btn3 = st.columns([1.5, 1, 1.5])
-    with col_btn2:
-        show_menu = st.toggle("🚀 Open AI Command Center")
-
-    # القائمة لا تظهر إلا عند تفعيل الزرار
-    if show_menu:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<div style='background: #1c2128; padding: 30px; border-radius: 20px; border: 1px solid #00f2ff;'>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<h1 class='project-header'>{page} Environment</h1>", unsafe_allow_html=True)
         
-        cols = st.columns(5)
+        # تحميل الكود المحفوظ سابقاً
+        saved_code = load_code(page)
         
-        with cols[0]:
-            st.markdown("<div class='ai-circle-small'><img src='https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg' width='30'></div>", unsafe_allow_html=True)
-            st.link_button("ChatGPT", "https://chat.openai.com", use_container_width=True)
+        st.subheader("🚀 Code Editor (Auto-Saved)")
+        code_input = st.text_area("أكتب الكود هنا (سيتم حفظه أوتوماتيكياً لهذا المشروع)", 
+                                  value=saved_code, height=300, key=f"editor_{page}")
+        
+        col_btn1, col_btn2 = st.columns([1, 5])
+        with col_btn1:
+            if st.button("💾 حفظ الكود"):
+                save_code(page, code_input)
+                st.toast(f"تم حفظ كود {page} بنجاح!", icon="✅")
+        
+        with col_btn2:
+            if st.button(f"▶️ تشغيل كود {page}"):
+                if code_input:
+                    st.markdown("---")
+                    st.subheader("⚙️ Execution Output:")
+                    try:
+                        old_stdout = sys.stdout
+                        redirected_output = sys.stdout = StringIO()
+                        exec(code_input)
+                        sys.stdout = old_stdout
+                        result = redirected_output.getvalue()
+                        if result: st.code(result, language='python')
+                        else: st.success("تم التنفيذ بنجاح (لا يوجد مخرجات نصية).")
+                    except Exception as e:
+                        st.error(f"Error in Code: {e}")
 
-        with cols[1]:
-            st.markdown("<div class='ai-circle-small'><img src='https://www.gstatic.com/images/branding/product/2x/gemini_2023_logo_color_256dp.png' width='30'></div>", unsafe_allow_html=True)
-            st.link_button("Gemini", "https://gemini.google.com", use_container_width=True)
-
-        with cols[2]:
-            st.markdown("<div class='ai-circle-small'><img src='https://static.deepseek.com/logo.png' width='30'></div>", unsafe_allow_html=True)
-            st.link_button("DeepSeek", "https://chat.deepseek.com", use_container_width=True)
-
-        with cols[3]:
-            st.markdown("<div class='ai-circle-small'><img src='https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg' width='30'></div>", unsafe_allow_html=True)
-            st.link_button("Chrome", "https://www.google.com", use_container_width=True)
-
-        with cols[4]:
-            st.markdown("<div class='ai-circle-small'><img src='https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg' width='40'></div>", unsafe_allow_html=True)
-            st.link_button("YouTube", "https://www.youtube.com", use_container_width=True)
-            
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # خانة البحث (مخفية برضه في tab)
-    with st.expander("🔍 Quick Search"):
-        search = st.text_input("Enter your search...")
-        if search:
-            st.link_button("Search Google", f"https://www.google.com/search?q={search}")
+        st.markdown("---")
+        with st.expander("📝 ملاحظات المشروع"):
+            st.text_area("اكتب أي ملاحظات إضافية هنا...", key=f"notes_{page}")
