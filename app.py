@@ -1,100 +1,111 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px # للمخططات التفاعلية
+import plotly.express as px
+import plotly.graph_objects as go
 
-# 1. إعدادات المنصة الاحترافية
-st.set_page_config(page_title="Hamza Oilfield AI", page_icon="🛢️", layout="wide")
+# 1. إعدادات المنصة النهائية
+st.set_page_config(page_title="Hamza Petroleum 100% AI", layout="wide")
 
-# تصميم واجهة المستقبل (UI/UX)
+# تصميم UI عالي التقنية (The Oilfield Dashboard)
 st.markdown("""
     <style>
-    .stApp { background: #050a10; color: #00ffcc; }
-    .stSidebar { background-color: #0a1420 !important; border-right: 2px solid #00ffcc; }
-    .stMetric { background-color: #0e1621; padding: 15px; border-radius: 15px; border: 1px solid #00ffcc; box-shadow: 0px 0px 10px #00ffcc; }
-    .stButton>button { 
-        background: linear-gradient(90deg, #00ffcc, #0088ff); 
-        color: black; font-weight: bold; border-radius: 20px;
-        box-shadow: 0px 0px 15px #00ffcc; width: 100%; transition: 0.5s;
-    }
-    .stButton>button:hover { transform: scale(1.02); box-shadow: 0px 0px 25px #00ffcc; }
+    .stApp { background: #000205; color: #00ffcc; }
+    .stMetric { background: #050a10; padding: 25px; border-radius: 15px; border-top: 5px solid #00ffcc; box-shadow: 0px 10px 20px rgba(0,0,0,0.8); }
+    [data-testid="stSidebar"] { background-color: #020508 !important; border-right: 1px solid #00ffcc; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. القائمة الجانبية المتكاملة
+# 2. القائمة الجانبية (الموسوعة الشاملة)
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2933/2933833.png", width=100)
-    st.title("🤖 Hamza AI Center")
-    menu = st.radio("انتقل إلى:", [
-        "📊 منصة التحليل (20 معامل)",
-        "🔮 التنبؤ بالإنتاج (AI Forecast)",
-        "🏗️ مراقبة الحفر واللزوجة",
-        "🌡️ توقع ضغط الطبقات (Pore Pressure)",
-        "⚙️ محول الوحدات الهندسي",
-        "📂 مركز التقارير الذكية"
+    st.title("🛰️ Hamza OS v100%")
+    menu = st.sidebar.selectbox("المحرك الذكي:", [
+        "📉 تحليل العقد (Nodal Analysis)",
+        "🔮 التنبؤ بالإنتاج (DCA)",
+        "🏗️ أمان الحفر والـ Kill Sheet",
+        "🧪 البتروفيزياء (Archie's Law)",
+        "⚡ أداء الطلمبات (ESP Analysis)",
+        "📊 منصة الـ 20 معامل",
+        "🧭 خريطة المواقع (GPS)",
+        "⚖️ ميزان الكربون والمالية"
     ])
+    st.sidebar.markdown("---")
+    st.sidebar.info("الحالة: تغطية هندسية كاملة 100% ✅")
 
-# --- القسم 1: الـ 20 معامل ---
-if menu == "📊 منصة التحليل (20 معامل)":
-    st.title("⛽ منصة تحليل المكامن (Reservoir Analysis)")
-    col1, col2 = st.columns(2)
-    with col1:
-        v1=st.number_input("العمق (ft)", 7000); v2=st.number_input("الضغط (psi)", 2500)
-        v3=st.number_input("الحرارة (°F)", 190); v5=st.number_input("النفاذية (mD)", 120)
-    with col2:
-        v12=st.number_input("اللزوجة (cp)", 1.5); v16=st.number_input("ضغط القاع (BHP)", 2000)
-        v20=st.number_input("عدد الأيام", 30)
-
-    if st.button("🚀 تشغيل المحاكي الرقمي"):
-        res = (v2 - v16) * (v5 / v12) * (v20 / 30)
-        st.success(f"الإنتاج الحالي المحسوب: {max(0, res):.2f} STB/D")
-        st.balloons()
-
-# --- القسم 2: التنبؤ بالمستقبل (AI Forecast) ---
-elif menu == "🔮 التنبؤ بالإنتاج (AI Forecast)":
-    st.title("🔮 التنبؤ بمنحنى الإنتاج (Decline Curve)")
-    qi = st.number_input("الإنتاج الابتدائي (Initial Production)", value=2000)
-    decline_rate = st.slider("معدل الهبوط السنوي (%)", 1, 50, 15)
-    years = st.slider("سنوات التوقع", 1, 10, 5)
-
-    # معادلة التنبؤ (Exponential Decline)
-    time_range = np.arange(0, years * 12)
-    q_forecast = qi * np.exp(-(decline_rate/100) * (time_range/12))
-    
-    df_forecast = pd.DataFrame({"الشهر": time_range, "الإنتاج المتوقع": q_forecast})
-    fig = px.area(df_forecast, x="الشهر", y="الإنتاج المتوقع", title="توقع إنتاج البئر للسنوات القادمة")
+# --- 1. تحليل العقد (IPR vs VLP) ---
+if menu == "📉 تحليل العقد (Nodal Analysis)":
+    st.title("📉 Inflow vs Outflow Performance")
+    q = np.linspace(10, 6000, 100)
+    pr = st.slider("Reservoir Pressure (psi)", 2000, 6000, 4500)
+    ipr = pr * (1 - 0.2*(q/6000) - 0.8*(q/6000)**2)
+    vlp = 1000 + 0.00015 * q**2
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=q, y=ipr, name="IPR", line=dict(color='#00ffcc', width=4)))
+    fig.add_trace(go.Scatter(x=q, y=vlp, name="VLP", line=dict(color='#ff4b4b', width=4)))
     st.plotly_chart(fig, use_container_width=True)
-    st.info(f"إجمالي الإنتاج التراكمي المتوقع: {int(q_forecast.sum())} برميل")
-
-# --- القسم 3: مراقبة الحفر واللزوجة ---
-elif menu == "🏗️ مراقبة الحفر واللزوجة":
-    st.title("🏗️ مراقبة بارامترات الحفر المباشرة")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Viscosity (اللزوجة)", "45 cp", "+2")
-    c2.metric("Mud Weight", "9.8 ppg", "-0.1")
-    c3.metric("ROP (سرعة الحفر)", "120 ft/hr")
     
-    st.write("---")
-    st.subheader("📊 مراقبة الضغط والاهتزاز")
-    st.line_chart(np.random.randint(2400, 2600, 24))
 
-# --- القسم 4: محول الوحدات الهندسي ---
-elif menu == "⚙️ محول الوحدات الهندسي":
-    st.title("⚙️ محول وحدات الحقل")
-    val = st.number_input("أدخل القيمة:", value=1.0)
-    unit_type = st.selectbox("من:", ["PSI to Bar", "Feet to Meter", "BBL to M3"])
+# --- 2. البتروفيزياء (Archie's Law) ---
+elif menu == "🧪 البتروفيزياء (Archie's Law)":
+    st.title("🧪 Petrophysical Analysis (Water Saturation)")
+    st.write("احسب نسبة المياه والزيت داخل الصخور:")
+    rw = st.number_input("Formation Water Resistivity (Rw)", 0.05)
+    phi = st.slider("Porosity (Φ)", 0.01, 0.40, 0.20)
+    rt = st.number_input("True Formation Resistivity (Rt)", 10.0)
     
-    if unit_type == "PSI to Bar":
-        st.write(f"النتيجة: {val * 0.0689:.4f} Bar")
-    elif unit_type == "Feet to Meter":
-        st.write(f"النتيجة: {val * 0.3048:.4f} Meter")
-    elif unit_type == "BBL to M3":
-        st.write(f"النتيجة: {val * 0.1589:.4f} M3")
+    # Archie's Equation: Sw = ( (a * Rw) / (Phi^m * Rt) )^(1/n)
+    sw = np.sqrt((1 * rw) / (phi**2 * rt))
+    so = 1 - sw
+    
+    c1, c2 = st.columns(2)
+    c1.metric("Water Saturation ($S_w$)", f"{sw*100:.2f} %")
+    c2.metric("Oil Saturation ($S_o$)", f"{so*100:.2f} %")
+    
 
-# --- القسم 5: التقارير ---
+# --- 3. أداء الطلمبات (ESP Analysis) ---
+elif menu == "⚡ أداء الطلمبات (ESP Analysis)":
+    st.title("⚡ ESP Pump Performance Curve")
+    q_pump = np.linspace(0, 5000, 100)
+    head = 4000 - 0.0001 * q_pump**2 # محاكاة لمنحنى الـ Head
+    
+    fig = px.line(x=q_pump, y=head, title="Pump Head vs Flow Rate")
+    fig.add_hline(y=2500, line_dash="dash", line_color="red", annotation_text="Required Head")
+    st.plotly_chart(fig, use_container_width=True)
+    
+
+# --- 4. أمان الحفر والـ Kill Sheet ---
+elif menu == "🏗️ أمان الحفر والـ Kill Sheet":
+    st.title("🏗️ Well Control Center")
+    sidpp = st.number_input("SIDPP (psi)", 500)
+    tvd = st.number_input("Depth (ft)", 10000)
+    omw = st.number_input("OMW (ppg)", 10.5)
+    kmw = omw + (sidpp / (0.052 * tvd))
+    st.metric("Kill Mud Weight (KMW)", f"{kmw:.2f} ppg")
+    
+
+# --- 5. التنبؤ بالإنتاج والمالية ---
+elif menu == "🔮 التنبؤ بالإنتاج (DCA)":
+    st.title("💰 Production & Financial Forecast")
+    qi = st.number_input("Initial Rate", 4000)
+    t = np.arange(0, 60)
+    qt = qi * np.exp(-(0.12/12) * t)
+    st.area_chart(qt)
+    st.metric("Daily Revenue ($)", f"{qi * 85:,.0f}")
+
+# --- 6. منصة الـ 20 معامل ---
+elif menu == "📊 منصة الـ 20 معامل":
+    st.title("📊 100% Data Coverage")
+    cols = st.columns(5)
+    for i in range(1, 21):
+        cols[i%5].text_input(f"Parameter {i}", "Value")
+
+# --- 7. خريطة المواقع (GPS) ---
+elif menu == "🧭 خريطة المواقع (GPS)":
+    st.title("📍 GPS Asset Tracking")
+    st.map(pd.DataFrame({'lat': [28.2, 29.5], 'lon': [33.1, 31.2]}))
+
+# --- 8. ميزان الكربون (ESG) ---
 else:
-    st.title("📂 مركز التقارير الذكية")
-    st.write("تجميع كافة البيانات الحالية في تقرير واحد.")
-    if st.button("Generate Master PDF Report"):
-        st.snow()
-        st.success("جاري تصدير التقرير النهائي...")
+    st.title("🌱 Environmental Impact")
+    diesel = st.number_input("Diesel Used (Gal/Day)", 500)
+    st.metric("Carbon Emissions ($CO_2$)", f"{(diesel * 10.18)/1000:.2f} Tons")
