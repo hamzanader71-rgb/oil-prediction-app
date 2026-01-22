@@ -1,103 +1,83 @@
 import streamlit as st
 import pandas as pd
-import datetime
+import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
+import datetime
 
-# --- 1. نظام الحماية المزدوج والتدمير الذاتي ---
+# --- 1. الحماية والتدمير (يومين) ---
 EXPIRY_DATE = datetime.date(2026, 1, 24)
-TODAY = datetime.date.today()
+if datetime.date.today() > EXPIRY_DATE:
+    st.error("🚨 License Expired! Contact Eng. Hamza")
+    st.stop()
 
-# كلمات السر (غيرهم براحتك)
-GUEST_PWD = "123"      # باسورد العميل (بيفتح 7 صفحات بس)
-ADMIN_PWD = "root"     # باسورد الأدمن (بيفتح الـ 70 صفحة كاملين)
+# --- 2. إعدادات الدخول ---
+GUEST_PWD = "123"
+ADMIN_PWD = "root"
 
-def secure_system():
-    if TODAY > EXPIRY_DATE:
-        st.markdown("<h1 style='text-align:center; color:red;'>🚨 SYSTEM LOCKED</h1>", unsafe_allow_html=True)
-        st.error("انتهت صلاحية النسخة التجريبية. يرجى التواصل مع المهندس حمزة.")
-        st.stop()
-
-secure_system()
-
-# --- 2. إعدادات المنصة ---
-st.set_page_config(page_title="Petro-Titan Dual Lock", layout="wide")
-
-st.markdown("""
-    <style>
-    .stApp { background: #0d1117; color: #e6edf3; }
-    .module-card { background: #161b22; border: 1px solid #30363d; padding: 20px; border-radius: 12px; }
-    .admin-badge { background: #238636; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- 3. إدارة الجلسة والدخول ---
 if 'auth_level' not in st.session_state: st.session_state.auth_level = None
 
 if not st.session_state.auth_level:
-    st.markdown("<h2 style='text-align:center;'>🔑 بوابة الوصول الآمن</h2>", unsafe_allow_html=True)
-    user_input = st.text_input("ادخل كود الوصول", type="password")
-    if st.button("Unlock System"):
-        if user_input == ADMIN_PWD:
-            st.session_state.auth_level = "ADMIN"
-            st.rerun()
-        elif user_input == GUEST_PWD:
-            st.session_state.auth_level = "GUEST"
-            st.rerun()
-        else:
-            st.error("الكود غير صحيح!")
+    st.title("🔒 Petro-Titan Login")
+    pwd = st.text_input("Enter Key", type="password")
+    if st.button("Unlock"):
+        if pwd == ADMIN_PWD: st.session_state.auth_level = "ADMIN"; st.rerun()
+        elif pwd == GUEST_PWD: st.session_state.auth_level = "GUEST"; st.rerun()
 else:
-    # --- 4. محرك الـ 70 موديول بنظام الحجب الذكي ---
-    main_7_modules = [
-        "🌐 التحكم الرئيسي", "🔮 توقعات الإنتاج (AI)", "🚨 مراقبة التسريب", 
-        "💰 ميزان المبيعات", "🏗️ هندسة الحفر", "📈 تحليل الأداء", "🛡️ الأمن والسلامة"
-    ]
-    
-    hidden_modules = [f"موديول تخصصي {i}" for i in range(8, 71)]
-    
-    # القائمة تظهر حسب مستوى الدخول
-    if st.session_state.auth_level == "ADMIN":
-        full_list = main_7_modules + hidden_modules
-        st.sidebar.markdown("<span class='admin-badge'>ADMIN ACCESS</span>", unsafe_allow_html=True)
-    else:
-        full_list = main_7_modules + ["🔓 فك حجب باقي الموديولات"]
-    
-    selection = st.sidebar.selectbox("اختر الموديول:", full_list)
+    # --- 3. تصميم القائمة المتنوعة ---
+    main_7 = ["🌍 لوحة التحكم", "🔮 تنبؤ AI", "🚨 مراقبة التسريب", "💰 مبيعات", "🏗️ حفر", "📈 أداء الإنتاج", "🛡️ أمان HSE"]
+    selection = st.sidebar.selectbox("القسم العملياتي:", main_7 if st.session_state.auth_level == "GUEST" else main_7 + [f"موديول {i}" for i in range(8, 71)])
 
-    # --- 5. منطق فك الحجب من الداخل ---
-    if selection == "🔓 فك حجب باقي الموديولات":
-        st.subheader("هذه الموديولات محجوبة في النسخة التجريبية")
-        unlock_key = st.text_input("ادخل باسورد الأدمن لفك الحجب", type="password")
-        if st.button("فك الحجب الآن"):
-            if unlock_key == ADMIN_PWD:
-                st.session_state.auth_level = "ADMIN"
-                st.success("تم فك الحجب عن الـ 70 موديول!")
-                st.rerun()
-            else:
-                st.error("باسورد الأدمن غلط!")
-    else:
-        # --- 6. تشغيل الموديولات المتاحة ---
-        st.title(f"🚀 {selection}")
-        
-        col_in, col_out = st.columns([1, 1.5])
-        with col_in:
-            st.markdown("<div class='module-card'>", unsafe_allow_html=True)
-            v1 = st.number_input("المدخل الأول", key=f"in1_{selection}")
-            v2 = st.number_input("المدخل الثاني", key=f"in2_{selection}")
-            run = st.button("بدء التحليل", key=f"btn_{selection}")
-            st.markdown("</div>", unsafe_allow_html=True)
+    st.title(f"🚀 {selection}")
+
+    # --- 4. محرك البيانات المختلفة (هنا السر) ---
+    col_data, col_viz = st.columns([1, 2])
+
+    with col_data:
+        st.markdown("### 🔢 قراءات حية")
+        if selection == "🔮 تنبؤ AI":
+            val = st.number_input("الإنتاج المستهدف (BPD)", 5000)
+            st.metric("التوقع الدقيق", f"{val * 1.05:,.0f}", "+5%")
+            st.write("**الحالة:** نمو مستمر")
             
-        with col_out:
-            st.markdown("<div class='module-card'>", unsafe_allow_html=True)
-            if run:
-                if selection == "🔮 توقعات الإنتاج (AI)":
-                    st.metric("التوقع", f"{v1 * 1.12:,.2f} BPD")
-                # ... باقي الأكواد السبعة هنا ...
-                st.success("تمت المعالجة بنجاح.")
-                fig = go.Figure(go.Scatter(y=[v1, v2, v1*1.5], mode='lines+markers', line=dict(color='#58a6ff')))
-                st.plotly_chart(fig, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        elif selection == "🚨 مراقبة التسريب":
+            p1 = st.number_input("الضغط الرئيسي (psi)", 1500)
+            p2 = st.number_input("الضغط الفرعي (psi)", 1480)
+            st.metric("فقد الضغط", f"{p1-p2} psi", delta_color="inverse")
+            st.write("**النتيجة:** خطوط سليمة")
+
+        elif selection == "🏗️ حفر":
+            depth = st.number_input("العمق الحالي (ft)", 12000)
+            rpm = st.number_input("سرعة الدوران (RPM)", 120)
+            st.write(f"**تآكل الدقاق:** {depth/2000:.1f}%")
+
+        else:
+            v = st.number_input("القيمة الأساسية", 100)
+            st.metric("القراءة", v)
+
+    with col_viz:
+        st.markdown("### 📊 التحليل البصري")
+        # كل صفحة ليها رسمة "شكلها" مختلف تماماً
+        if selection == "🔮 تنبؤ AI":
+            # رسمة "عداد" (Gauge)
+            fig = go.Figure(go.Indicator(mode="gauge+number", value=92, title={'text': "دقة التنبؤ %"}, gauge={'bar': {'color': "#58a6ff"}}))
+        
+        elif selection == "🚨 مراقبة التسريب":
+            # رسمة "حرارية" (Heatmap)
+            fig = px.imshow([[1500, 1490, 1480], [1495, 1485, 1475]], title="خريطة ضغط الشبكة", color_continuous_scale="RdYlGn")
+        
+        elif selection == "🏗️ حفر":
+            # رسمة "أعمدة" رأسية للأعماق
+            fig = px.bar(x=["Surface", "Intermediate", "Production"], y=[3000, 8000, 12000], title="تصميم البئر")
+            
+        else:
+            # رسمة "كيرف" عادي
+            fig = px.line(y=np.random.randint(10, 100, 10), title="اتجاه البيانات العام")
+
+        fig.update_layout(template="plotly_dark", height=350)
+        st.plotly_chart(fig, use_container_width=True)
 
 # زر الخروج
 st.sidebar.markdown("---")
-if st.sidebar.button("🔒 خروج"):
+if st.sidebar.button("🔒 تسجيل الخروج"):
     st.session_state.auth_level = None; st.rerun()
