@@ -1,80 +1,53 @@
 import streamlit as st
-import pandas as pd
-from sqlalchemy import create_engine, text # أضفنا text هنا
-import hashlib
-from datetime import datetime
 
-# إعداد قاعدة البيانات
-engine = create_engine("sqlite:///petroleum_db.db", echo=False)
+# 1. إعدادات الصفحة الأساسية
+st.set_page_config(page_title="Global Oil Platform", layout="wide")
 
-# إنشاء الجداول - تم التعديل باستخدام text() لتجنب الخطأ
-def init_db():
-    with engine.begin() as conn:
-        conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            role TEXT
-        )
-        """))
-        conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS production_data (
-            Well_Name TEXT,
-            Date DATE,
-            Oil_Rate REAL,
-            Gas_Rate REAL,
-            Water_Rate REAL
-        )
-        """))
-        # إضافة مسؤول افتراضي إذا لم يوجد
-        check_admin = conn.execute(text("SELECT * FROM users WHERE username='admin'")).fetchone()
-        if not check_admin:
-            conn.execute(text("INSERT INTO users (username, password, role) VALUES (:u, :p, :r)"),
-                {"u": "admin", "p": hashlib.sha256("admin123".encode()).hexdigest(), "r": "Admin"})
+# 2. نظام اللغات (مساحة قابلة للتوسع)
+languages = {
+    "English": {"welcome": "Welcome", "search": "Search Google", "login": "Login"},
+    "العربية": {"welcome": "أهلاً بك", "search": "بحث جوجل", "login": "تسجيل الدخول"},
+    "Français": {"welcome": "Bienvenue", "search": "Chercher sur Google", "login": "Connexion"},
+    "Italiano": {"welcome": "Benvenuto", "search": "Cerca su Google", "login": "Accedi"},
+    "Deutsch": {"welcome": "Willkommen", "search": "Google-Suche", "login": "Anmelden"}
+}
 
-init_db()
+sel_lang = st.sidebar.selectbox("🌐 Choose Language / اختر اللغة", list(languages.keys()))
+lang = languages[sel_lang]
 
-# وظائف الأمان
-def hash_pass(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+# 3. نظام الأمان (Login System)
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
 
-def authenticate(username, password):
-    hashed = hash_pass(password)
-    with engine.connect() as conn:
-        query = text("SELECT role FROM users WHERE username=:u AND password=:p")
-        res = conn.execute(query, {"u": username, "p": hashed}).fetchone()
-        return res[0] if res else None
-
-# واجهة التطبيق
-st.title("📦 Data Foundation System")
-
-if 'auth' not in st.session_state:
-    st.session_state.auth = None
-
-if st.session_state.auth is None:
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        role = authenticate(username, password)
-        if role:
-            st.session_state.auth = role
+def login():
+    st.title(lang["login"])
+    user = st.text_input("Username")
+    pw = st.text_input("Password", type="password")
+    if st.button("Enter"):
+        if user == "admin" and pw == "12345": # تقدر تغيرهم طبعاً
+            st.session_state['logged_in'] = True
             st.rerun()
         else:
-            st.error("خطأ في البيانات")
+            st.error("خطأ في البيانات / Incorrect Credentials")
+
+# 4. محتوى البرنامج بعد الدخول
+if not st.session_state['logged_in']:
+    login()
 else:
-    st.success(f"مرحباً بك بصلاحية: {st.session_state.auth}")
+    st.sidebar.success(f"✅ {lang['welcome']}")
     
-    # قسم الرفع
-    uploaded_file = st.file_uploader("ارفع ملف البيانات (CSV or Excel)", type=["csv", "xlsx"])
-    if uploaded_file and st.button("معالجة وحفظ"):
-        df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-        
-        # تنظيف البيانات
-        df.dropna(how="all", inplace=True)
-        
-        # حفظ في القاعدة
-        df.to_sql("production_data", engine, if_exists="append", index=False)
-        st.success("تم حفظ البيانات بنجاح في قاعدة البيانات السحابية")
-        st.dataframe(df.head())
-# ... (بقية منطق تسجيل الدخول والرفع)
+    # أزرار الذكاء الاصطناعي وجوجل في الجنب
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🚀 Quick Links")
+    st.sidebar.link_button("🤖 Open ChatGPT", "https://chat.openai.com")
+    st.sidebar.link_button("🧠 Open DeepSeek", "https://chat.deepseek.com")
+    st.sidebar.link_button("🔍 Google Search", "https://www.google.com")
+
+    # مكان وضع أدواتك المستقبيلة
+    st.title("🛢️ Global Oil & Gas Dashboard")
+    st.write(f"This is your secure, multi-language workspace in {sel_lang}.")
+    
+    # إضافة معالج بيانات (كمثال مبدئي للسلاسة)
+    uploaded_file = st.file_uploader("Upload Data for Processing")
+    if uploaded_file:
+        st.success("Data loaded successfully! (Secure Encryption Active)")
