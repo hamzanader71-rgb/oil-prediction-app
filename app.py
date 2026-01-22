@@ -1,104 +1,128 @@
 import streamlit as st
-import sys
 import os
-from io import StringIO
 
-# --- إعدادات النسخة V15 ---
-st.set_page_config(page_title="BEAST PERSISTENT", layout="wide", page_icon="💾")
+# --- الإعدادات الفنية (الاستايل الصناعي) ---
+st.set_page_config(page_title="PETRO-LEADER CONTROL", layout="wide", page_icon="⛽")
 
 MASTER_PASSWORD = "root" 
 
-# --- وظائف حفظ واسترجاع الأكواد من ملفات ---
-def save_code(page_name, code):
-    with open(f"{page_name}_code.txt", "w", encoding="utf-8") as f:
-        f.write(code)
-
-def load_code(page_name):
-    filename = f"{page_name}_code.txt"
-    if os.path.exists(filename):
-        with open(filename, "r", encoding="utf-8") as f:
-            return f.read()
-    return ""
-
-# --- التصميم الاحترافي ---
+# استايل شركات البترول (Deep Space Gray & Safety Orange)
 st.markdown("""
     <style>
-    .stApp { background-color: #0b0e14; color: #ffffff; }
-    [data-testid="stSidebar"] { background-color: #161b22 !important; border-right: 1px solid #3e4451; }
-    .project-header { color: #00f2ff; border-bottom: 2px solid #3e4451; padding-bottom: 10px; font-family: 'Orbitron'; }
-    .stTextArea textarea { background-color: #000000 !important; color: #00ff00 !important; font-family: 'Courier New', monospace; border: 1px solid #00f2ff !important; }
+    .stApp { background-color: #050505; color: #ffffff; }
+    [data-testid="stSidebar"] { background-color: #111111 !important; border-right: 2px solid #f39c12; }
+    
+    /* كروت البيانات المهنية */
+    .metric-card {
+        background: #1a1a1a; border-left: 5px solid #f39c12;
+        padding: 15px; border-radius: 5px; margin-bottom: 10px;
+    }
+    
+    /* العناوين الاحترافية */
+    .petro-header {
+        color: #f39c12; font-family: 'Arial Black'; border-bottom: 1px solid #333;
+        padding-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;
+    }
+    
+    /* محرر الأكواد (الهيكل التنفيذي) */
+    .stTextArea textarea {
+        background-color: #000 !important; color: #f39c12 !important;
+        font-family: 'Consolas', monospace; border: 1px solid #333 !important;
+    }
+    
+    .stButton>button {
+        background-color: #f39c12; color: black; border-radius: 0px;
+        font-weight: bold; width: 100%; border: none;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- نظام الدخول ---
-if 'authenticated' not in st.session_state: st.session_state.authenticated = False
+# --- نظام الذاكرة وحفظ الكود ---
+def save_p_code(p_id, content):
+    with open(f"p_{p_id}_source.txt", "w", encoding="utf-8") as f: f.write(content)
 
-if not st.session_state.authenticated:
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st.markdown("<div style='text-align: center; background: #1c2128; padding: 40px; border-radius: 20px; border: 1px solid #3e4451;'>", unsafe_allow_html=True)
-        st.header("Master Access")
-        pwd_input = st.text_input("Security Code", type="password")
-        if st.button("Unlock"):
-            if pwd_input == MASTER_PASSWORD:
-                st.session_state.authenticated = True
-                st.rerun()
-            else: st.error("Access Denied")
-        st.markdown("</div>", unsafe_allow_html=True)
+def load_p_code(p_id):
+    if os.path.exists(f"p_{p_id}_source.txt"):
+        with open(f"p_{p_id}_source.txt", "r", encoding="utf-8") as f: return f.read()
+    return "# Start your Petro-Project code here..."
+
+# --- نظام الدخول ---
+if 'auth' not in st.session_state: st.session_state.auth = False
+
+if not st.session_state.auth:
+    st.markdown("<div style='text-align: center; margin-top: 150px;'>", unsafe_allow_html=True)
+    st.image("https://cdn-icons-png.flaticon.com/512/2967/2967568.png", width=100)
+    st.markdown("<h2 class='petro-header'>SYSTEM LOGIN</h2>", unsafe_allow_html=True)
+    pwd = st.text_input("Enter Credentials", type="password")
+    if st.button("LOG IN"):
+        if pwd == MASTER_PASSWORD:
+            st.session_state.auth = True
+            st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 else:
-    # --- القائمة الجانبية (10 صفحات) ---
-    st.sidebar.title("🎮 Command Center")
-    page = st.sidebar.selectbox("Go to Page:", 
-                               ["Home"] + [f"Project_{i}" for i in range(1, 11)])
-
-    with st.sidebar.expander("🤖 AI & Tools"):
+    # --- الهيكل العالمي (القائمة الجانبية الموزعة) ---
+    st.sidebar.markdown("<h2 style='color:#f39c12;'>🛢️ PETRO-CORE</h2>", unsafe_allow_html=True)
+    
+    # توزيع الـ 10 صفحات بأسماء تخصصات البترول
+    pages = {
+        "DASHBOARD": "الرئيسية",
+        "WELL_LOGS": "سجلات الآبار",
+        "PRODUCTION": "بيانات الإنتاج",
+        "DRILLING": "عمليات الحفر",
+        "RESERVOIR": "الخزانات",
+        "SEISMIC": "المسح السيزمي",
+        "PIPELINES": "خطوط الأنابيب",
+        "SAFETY_HSE": "الأمن والسلامة",
+        "REFINING": "التكرير",
+        "COST_ANALYSIS": "تحليل التكاليف"
+    }
+    
+    selection = st.sidebar.radio("NAVIGATE SYSTEM", list(pages.keys()))
+    
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("🛠️ EXTERNAL AI"):
         st.link_button("ChatGPT", "https://chat.openai.com")
         st.link_button("Gemini", "https://gemini.google.com")
-        st.link_button("DeepSeek", "https://chat.deepseek.com")
 
-    if st.sidebar.button("🔴 Lock"):
-        st.session_state.authenticated = False
+    if st.sidebar.button("🔒 EXIT SYSTEM"):
+        st.session_state.auth = False
         st.rerun()
 
-    # --- محتوى الصفحات ---
-    if page == "Home":
-        st.markdown("<h1 class='project-header'>Main Dashboard</h1>", unsafe_allow_html=True)
-        st.info(f"مرحباً يا مستر حمزة. الكود اللي هتكتبه في أي مشروع هيفضل محفوظ باسم الصفحة.")
+    # --- محتوى الصفحات (الهيكل العالمي) ---
+    st.markdown(f"<h1 class='petro-header'>{selection} UNIT</h1>", unsafe_allow_html=True)
     
-    else:
-        st.markdown(f"<h1 class='project-header'>{page} Environment</h1>", unsafe_allow_html=True)
-        
-        # تحميل الكود المحفوظ سابقاً
-        saved_code = load_code(page)
-        
-        st.subheader("🚀 Code Editor (Auto-Saved)")
-        code_input = st.text_area("أكتب الكود هنا (سيتم حفظه أوتوماتيكياً لهذا المشروع)", 
-                                  value=saved_code, height=300, key=f"editor_{page}")
-        
-        col_btn1, col_btn2 = st.columns([1, 5])
-        with col_btn1:
-            if st.button("💾 حفظ الكود"):
-                save_code(page, code_input)
-                st.toast(f"تم حفظ كود {page} بنجاح!", icon="✅")
-        
-        with col_btn2:
-            if st.button(f"▶️ تشغيل كود {page}"):
-                if code_input:
-                    st.markdown("---")
-                    st.subheader("⚙️ Execution Output:")
-                    try:
-                        old_stdout = sys.stdout
-                        redirected_output = sys.stdout = StringIO()
-                        exec(code_input)
-                        sys.stdout = old_stdout
-                        result = redirected_output.getvalue()
-                        if result: st.code(result, language='python')
-                        else: st.success("تم التنفيذ بنجاح (لا يوجد مخرجات نصية).")
-                    except Exception as e:
-                        st.error(f"Error in Code: {e}")
+    # عرض الـ Metrics زي برامج البترول
+    c1, c2, c3 = st.columns(3)
+    with c1: st.markdown("<div class='metric-card'><b>Flow Rate:</b> 2,450 bpd</div>", unsafe_allow_html=True)
+    with c2: st.markdown("<div class='metric-card'><b>Pressure:</b> 1,200 psi</div>", unsafe_allow_html=True)
+    with c3: st.markdown("<div class='metric-card'><b>Status:</b> ACTIVE</div>", unsafe_allow_html=True)
 
-        st.markdown("---")
-        with st.expander("📝 ملاحظات المشروع"):
-            st.text_area("اكتب أي ملاحظات إضافية هنا...", key=f"notes_{page}")
+    # محرك الأكواد المثبت (المحرك اللي بيشغل مشروعك)
+    st.markdown("### ⚙️ PROJECT CODE EXECUTOR")
+    current_code = load_p_code(selection)
+    code_area = st.text_area("Source Code", value=current_code, height=350, key=f"code_{selection}")
+    
+    col_act1, col_act2 = st.columns([1, 4])
+    with col_act1:
+        if st.button("SAVE CODE"):
+            save_p_code(selection, code_area)
+            st.toast("Data Saved to Core", icon="💾")
+    with col_act2:
+        if st.button("RUN MODULE"):
+            try:
+                # تنفيذ الكود وعرض النتايج
+                import sys
+                from io import StringIO
+                output = StringIO()
+                sys.stdout = output
+                exec(code_area)
+                sys.stdout = sys.__stdout__
+                st.code(output.getvalue(), language="python")
+            except Exception as e:
+                st.error(f"Execution Error: {e}")
+
+    # مساحة الملاحظات والملفات لكل صفحة
+    with st.expander("📂 PROJECT FILES & NOTES"):
+        st.file_uploader("Upload Sector Data", key=f"file_{selection}")
+        st.text_area("Engineering Notes", key=f"note_{selection}")
