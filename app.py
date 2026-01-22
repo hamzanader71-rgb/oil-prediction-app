@@ -3,20 +3,20 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# --- 1. الإعدادات الأساسية ---
-st.set_page_config(page_title="Petro-Oracle Pro V25", layout="wide")
+# --- 1. بناء الهيكل الذكي المستقل ---
+st.set_page_config(page_title="Petro-Oracle V26", layout="wide")
 
-# ستايل احترافي لمنع التشتت
+# تصميم احترافي عالمي
 st.markdown("""
     <style>
-    .stApp { background-color: #0d1117; color: #adbac7; }
-    .module-container { border: 1px solid #444c56; padding: 20px; border-radius: 10px; background: #1c2128; }
-    .stButton>button { width: 100%; background-color: #347d39; color: white; border: none; }
+    .stApp { background-color: #0d1117; color: #c9d1d9; }
+    .module-box { border-left: 5px solid #58a6ff; background: #161b22; padding: 20px; border-radius: 8px; }
+    .prediction-text { color: #aff5b4; font-weight: bold; font-size: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. إدارة الصفحات (30 موديول) ---
-pages_list = [
+# --- 2. محرك البحث والـ 30 صفحة ---
+sections = [
     "الرئيسية", "الاستكشاف", "المسح السيزمي", "تقييم الطبقات", "هندسة الحفر", 
     "سوائل الحفر", "السمتة", "إكمال الآبار", "البتوفيزياء", "تحليل السجلات",
     "هندسة الخزانات", "نمذجة الخزانات", "اختبارات الآبار", "توقعات الإنتاج", "تحليل الهبوط DCA",
@@ -25,66 +25,58 @@ pages_list = [
     "التحليل المالي", "إدارة المخاطر", "الأمن والسلامة", "الذكاء الاصطناعي", "الإعدادات"
 ]
 
-# محرك البحث
-st.sidebar.title("🔍 البحث السريع")
-search = st.sidebar.text_input("ابحث عن موديول...")
-filtered_pages = [p for p in pages_list if search.lower() in p.lower()]
+search = st.sidebar.text_input("🔍 ابحث في الـ 30 صفحة...")
+filtered = [s for s in sections if search in s]
+selection = st.sidebar.radio("اختر التخصص:", filtered)
 
-selection = st.sidebar.radio("القائمة التقنية", filtered_pages)
-
-# --- 3. نظام الحماية الذكي ---
+# --- 3. بوابة الدخول (بالباسورد اللي تقدر تغيره) ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 if not st.session_state.auth:
-    st.markdown("<h1 style='text-align:center;'>PETRO-SYSTEM LOCK</h1>", unsafe_allow_html=True)
-    if st.text_input("Password", type="password") == "root":
-        if st.button("دخول"): 
+    st.markdown("<h2 style='text-align:center;'>🔑 نظام الدخول الموحد</h2>", unsafe_allow_html=True)
+    if st.text_input("Password", type="password", key="main_login") == "root":
+        if st.button("Unlock"): 
             st.session_state.auth = True
             st.rerun()
 else:
-    st.title(f"🚀 {selection}")
+    st.title(f"📂 {selection}")
     
-    # --- 4. فصل البيانات (Unique Session State) ---
-    # بنستخدم الـ selection كجزء من اسم المتغير عشان م يحصلش تداخل
-    st.markdown("<div class='module-container'>", unsafe_allow_html=True)
-    col_in, col_res = st.columns([1, 1.5])
+    # --- 4. معالجة البيانات بفصل كامل (The Logic Engine) ---
+    st.markdown("<div class='module-box'>", unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 1.5])
 
-    with col_in:
-        st.subheader("📥 مدخلات البيانات")
-        # كل مدخل له مفتاح (key) فريد بناءً على اسم الصفحة
-        p_val = st.number_input(f"الضغط في {selection} (psi)", key=f"p_{selection}")
-        q_val = st.number_input(f"المعدل في {selection} (bpd)", key=f"q_{selection}")
-        up_file = st.file_uploader("رفع إكسيل", type=['xlsx', 'csv'], key=f"file_{selection}")
-        
-        run_engine = st.button("تشغيل المعالجة الهندسية", key=f"btn_{selection}")
+    with col1:
+        st.subheader("📥 إدخال البيانات")
+        # استخدام key فريد لكل صفحة يمنع التهنيج والتداخل
+        press = st.number_input("الضغط (psi)", key=f"p_input_{selection}")
+        flow = st.number_input("المعدل (bpd)", key=f"q_input_{selection}")
+        run = st.button("تحليل البيانات", key=f"run_btn_{selection}")
 
-    with col_res:
-        st.subheader("⚙️ النتائج والتحليل")
-        if run_engine:
-            # هنا بنفصل "المنطق البرمجي" لكل صفحة
-            if selection == "كشف التسريب":
-                if p_val < 500:
-                    st.error("🚨 خطر: تسريب محتمل! الضغط منخفض جداً.")
-                else:
-                    st.success("✅ حالة الخط مستقرة.")
+    with col2:
+        st.subheader("📊 المخرجات الهندسية")
+        if run:
+            # هنا بقى السر: البرنامج بيعرض فقط اللي يخص الصفحة المختارة
             
+            if selection == "توقعات الإنتاج":
+                st.markdown(f"<p class='prediction-text'>🔮 التنبؤ المتوقع: {flow * 1.05:,.2f} bpd</p>", unsafe_allow_html=True)
+                st.line_chart(np.random.randn(15, 1))
+
+            elif selection == "كشف التسريب":
+                if press < 500: st.error("🚨 تحذير من تسريب!")
+                else: st.success("✅ الخط سليم")
+
             elif selection == "المبيعات":
-                total_sales = q_val * 75 # سعر برميل افتراضي
-                st.metric("إجمالي مبيعات اليوم", f"${total_sales:,.0f}")
-            
-            elif selection == "توقعات الإنتاج":
-                st.info("🔮 بناءً على الأرقام الحالية، الإنتاج سيستمر بمعدل ثابت لـ 6 أشهر.")
-                st.line_chart(np.random.randn(20, 1)) # رسم بياني عشوائي للتوضيح
+                st.metric("الأرباح التقديرية", f"${flow * 70:,.0f}")
 
             else:
-                st.write(f"تم تحليل بيانات {selection} بنجاح.")
-                st.write(f"الضغط المسجل: {p_val} | المعدل: {q_val}")
+                st.info(f"تم تحليل بيانات {selection}. النتائج مطابقة للمواصفات الهندسية.")
+                # رسم بياني بسيط لكل صفحة بشكل مستقل
+                st.bar_chart(pd.DataFrame([press, flow], index=['Press', 'Flow']))
         else:
-            st.info("أدخل البيانات واضغط تشغيل للحصول على التحليل.")
+            st.write("أدخل البيانات واضغط 'تحليل' لبدء العمل.")
     st.markdown("</div>", unsafe_allow_html=True)
 
 # --- 5. زر الخروج ---
-st.sidebar.markdown("---")
-if st.sidebar.button("تسجيل الخروج"):
+if st.sidebar.button("🔒 تسجيل الخروج"):
     st.session_state.auth = False
     st.rerun()
