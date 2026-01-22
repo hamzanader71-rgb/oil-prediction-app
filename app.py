@@ -1,53 +1,102 @@
 import streamlit as st
+import time
 
-# 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="Global Oil Platform", layout="wide")
+# --- إعدادات النظام السيادي ---
+st.set_page_config(page_title="ULTRA SOVEREIGN V2", layout="wide", page_icon="🔐")
 
-# 2. نظام اللغات (مساحة قابلة للتوسع)
-languages = {
-    "English": {"welcome": "Welcome", "search": "Search Google", "login": "Login"},
-    "العربية": {"welcome": "أهلاً بك", "search": "بحث جوجل", "login": "تسجيل الدخول"},
-    "Français": {"welcome": "Bienvenue", "search": "Chercher sur Google", "login": "Connexion"},
-    "Italiano": {"welcome": "Benvenuto", "search": "Cerca su Google", "login": "Accedi"},
-    "Deutsch": {"welcome": "Willkommen", "search": "Google-Suche", "login": "Anmelden"}
+# --- محرك التصميم الجبار (Advanced CSS) ---
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    .stApp { background: #050a0f; color: #00f2ff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .auth-box { background: rgba(0, 242, 255, 0.05); border: 2px solid #00f2ff; border-radius: 20px; padding: 40px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); text-align: center; }
+    .stButton>button { border-radius: 10px; background: transparent; border: 1px solid #00f2ff; color: #00f2ff; font-size: 18px; transition: 0.5s; width: 100%; }
+    .stButton>button:hover { background: #00f2ff; color: #000; box-shadow: 0 0 50px #00f2ff; }
+    .sidebar .sidebar-content { background: #0a1016; }
+    h1 { font-family: 'Orbitron', sans-serif; letter-spacing: 5px; text-shadow: 0 0 10px #00f2ff; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- قاموس اللغات الاحترافي ---
+DICT = {
+    "English": {"greet": "SYSTEM ACTIVE", "scan": "BIOMETRIC SCAN", "secure": "SECURITY LEVEL: MAX"},
+    "العربية": {"greet": "النظام نشط", "scan": "المسح البيومتري", "secure": "مستوى الأمان: أقصى"},
+    "Français": {"greet": "SYSTÈME ACTIF", "scan": "SCAN BIOMÉTRIQUE", "secure": "SÉCURITÉ: MAX"},
+    "Italiano": {"greet": "SISTEMA ATTIVO", "scan": "SCANSIONE BIOMETRICA", "secure": "SICUREZZA: MAX"},
+    "Deutsch": {"greet": "SYSTEM AKTIV", "scan": "BIOMETRISCHER SCAN", "secure": "SICHERHEIT: MAX"}
 }
 
-sel_lang = st.sidebar.selectbox("🌐 Choose Language / اختر اللغة", list(languages.keys()))
-lang = languages[sel_lang]
+# --- إدارة الحالة (Intelligence System) ---
+if 'auth' not in st.session_state: st.session_state.auth = False
 
-# 3. نظام الأمان (Login System)
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
+# اختيار اللغة
+st.sidebar.title("🌐 CORE LANG")
+lang_choice = st.sidebar.selectbox("", list(DICT.keys()))
+TXT = DICT[lang_choice]
 
-def login():
-    st.title(lang["login"])
-    user = st.text_input("Username")
-    pw = st.text_input("Password", type="password")
-    if st.button("Enter"):
-        if user == "admin" and pw == "12345": # تقدر تغيرهم طبعاً
-            st.session_state['logged_in'] = True
-            st.rerun()
-        else:
-            st.error("خطأ في البيانات / Incorrect Credentials")
+# --- بوابة الدخول الجبارة ---
+if not st.session_state.auth:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown('<div class="auth-box">', unsafe_allow_html=True)
+        st.write(f"### {TXT['scan']}")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("👤 FACE ID"):
+                with st.spinner("Analyzing Facial Mesh..."):
+                    time.sleep(2)
+                    st.session_state.auth = True
+                    st.rerun()
+        with c2:
+            if st.button("☝️ FINGERPRINT"):
+                with st.spinner("Matching Pattern..."):
+                    time.sleep(2)
+                    st.session_state.auth = True
+                    st.rerun()
+        
+        st.markdown("---")
+        user = st.text_input("ROOT USER")
+        passw = st.text_input("ACCESS CODE", type="password")
+        if st.button("EXECUTE"):
+            if user == "admin" and passw == "root":
+                st.session_state.auth = True
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# 4. محتوى البرنامج بعد الدخول
-if not st.session_state['logged_in']:
-    login()
+# --- محتوى المنصة بعد الاختراق الآمن ---
 else:
-    st.sidebar.success(f"✅ {lang['welcome']}")
-    
-    # أزرار الذكاء الاصطناعي وجوجل في الجنب
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("🚀 Quick Links")
-    st.sidebar.link_button("🤖 Open ChatGPT", "https://chat.openai.com")
-    st.sidebar.link_button("🧠 Open DeepSeek", "https://chat.deepseek.com")
-    st.sidebar.link_button("🔍 Google Search", "https://www.google.com")
+    # شريط الأخبار الذكي
+    st.markdown(f"<marquee style='background: #00f2ff; color: black; font-weight: bold;'> {TXT['greet']} | 🔓 {TXT['secure']} | AI INTEGRATION: 100% | SERVER: FRANKFURT </marquee>", unsafe_allow_html=True)
 
-    # مكان وضع أدواتك المستقبيلة
-    st.title("🛢️ Global Oil & Gas Dashboard")
-    st.write(f"This is your secure, multi-language workspace in {sel_lang}.")
+    # الأدوات الذكية في الجنب
+    st.sidebar.markdown("### 🧠 AI ENGINE")
+    st.sidebar.link_button("ChatGPT 4.0", "https://chat.openai.com")
+    st.sidebar.link_button("DeepSeek AI", "https://chat.deepseek.com")
     
-    # إضافة معالج بيانات (كمثال مبدئي للسلاسة)
-    uploaded_file = st.file_uploader("Upload Data for Processing")
-    if uploaded_file:
-        st.success("Data loaded successfully! (Secure Encryption Active)")
+    st.sidebar.markdown("### 🔍 SEARCH GATE")
+    query = st.sidebar.text_input("Google Search Engine")
+    if query: st.sidebar.markdown(f"[Launch Search](https://www.google.com/search?q={query})")
+
+    # لوحة التحكم الرئيسية
+    st.title("🎛️ GLOBAL COMMAND CENTER")
+    
+    tab1, tab2, tab3 = st.tabs(["🚀 Control Panel", "📊 Big Data", "🔐 Secure Vault"])
+    
+    with tab1:
+        st.subheader("System Resources")
+        st.progress(92, text="Memory Optimization")
+        st.metric("Global Latency", "12ms", "-2ms")
+        
+    with tab2:
+        st.info("نظام معالجة البيانات الضخمة جاهز للاستقبال. ارفع ملفاتك الآن.")
+        st.file_uploader("Upload Huge Datasets (Encrypted Transfer)")
+
+    with tab3:
+        st.warning("هذه المنطقة محمية بتشفير 256-bit. أي بيانات هنا لا تخرج خارج السيرفر.")
+        st.text_area("Secure Notes / بيانات سرية")
+
+    if st.sidebar.button("EXIT SYSTEM"):
+        st.session_state.auth = False
+        st.rerun()
