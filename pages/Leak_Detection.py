@@ -2,111 +2,83 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime
 
-# 1. إعدادات الصفحة والسمة الاحترافية
-st.set_page_config(page_title="Emperor Leak Detection 100%", layout="wide")
+# 1. إعدادات المنصة
+st.set_page_config(page_title="Emperor Leak & Finance Hub", layout="wide")
 
 st.markdown("""
     <style>
-    .stApp { background: #000508; color: #00ffa2; }
-    .metric-card { background: #011627; padding: 15px; border-radius: 10px; border-left: 5px solid #ff0055; }
+    .stApp { background: #00080f; color: #00ffcc; }
+    .stMetric { background: #011627; padding: 20px; border-radius: 15px; border-top: 4px solid #ff0055; box-shadow: 0 5px 15px rgba(255,0,85,0.2); }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🛡️ نظام الرقابة الإمبراطوري لخطوط الأنابيب (Full Integrity)")
-st.write(f"تاريخ التقرير اللحظي: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+st.title("🚨 نظام مراقبة النزيف المالي وسلامة الأنابيب")
+st.write(f"الحالة اللحظية للخط: {datetime.now().strftime('%H:%M:%S')}")
 
-# --- Sidebar للتحكم في بارامترات النظام ---
+# 2. لوحة التحكم والحسابات المالية
 with st.sidebar:
-    st.header("⚙️ إعدادات الحساسات")
-    pipe_length = st.number_input("طول الخط (km)", 50, 500, 100)
-    oil_price = st.number_input("سعر البرميل الحالي ($)", 70, 120, 85)
+    st.header("💰 معايير الخسارة")
+    oil_price = st.number_input("سعر البرميل الحالي ($)", 70.0, 120.0, 85.0)
     st.divider()
-    st.info("النظام يعمل بتقنية Fiber Optic + Mass Balance")
+    st.header("⚙️ بيانات الحساسات")
+    f_in = st.number_input("Inlet Flow (bbl/hr)", 4000)
+    f_out = st.number_input("Outlet Flow (bbl/hr)", 3750)
+    p_in = st.number_input("P-In (psi)", 1200)
+    p_out = st.number_input("P-Out (psi)", 950)
 
-# 2. لوحة التحكم في الحساسات (Live Sensors)
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    f_in = st.number_input("Flow In (bbl/hr)", 0, 10000, 4000)
-with col2:
-    f_out = st.number_input("Flow Out (bbl/hr)", 0, 10000, 3850)
-with col3:
-    p_in = st.number_input("Pressure In (psi)", 0, 2000, 1200)
-with col4:
-    p_out = st.number_input("Pressure Out (psi)", 0, 2000, 1050)
+# 3. المحرك المالي والهندسي
+loss = f_in - f_out
+loss_perc = (loss / f_in) * 100 if f_in > 0 else 0
+financial_loss_hr = loss * oil_price
+financial_loss_min = financial_loss_hr / 60
+leak_loc = (p_out / p_in) * 100 if loss > 0 else 0
 
-# --- محرك الحسابات الذكي (The Engine) ---
-loss_hr = f_in - f_out
-loss_ratio = (loss_hr / f_in) * 100 if f_in > 0 else 0
-is_leak = loss_ratio > 1.0  # التنبيه يبدأ من 1% فقد
-
-# 3. عرض مؤشرات الأداء (KPIs)
+# 4. عرض مؤشرات الكارثة (Metrics)
 st.markdown("---")
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-with kpi1:
-    st.metric("حجم التسريب", f"{loss_hr} bbl/hr", delta=f"{loss_ratio:.1f}%", delta_color="inverse")
-with kpi2:
-    st.metric("الخسارة المالية/ساعة", f"${loss_hr * oil_price:,.0f}")
-with kpi3:
-    leak_location = (p_out / p_in) * pipe_length if is_leak else 0
-    st.metric("نقطة التسريب المتوقعة", f"Km {leak_location:.2f}")
-with kpi4:
-    status = "🔴 CRITICAL" if is_leak else "🟢 SECURE"
-    st.metric("حالة الخط الآن", status)
+m1, m2, m3, m4 = st.columns(4)
+with m1:
+    st.metric("معدل التسريب", f"{loss} bbl/hr", delta=f"{loss_perc:.1f}%", delta_color="inverse")
+with m2:
+    st.metric("نزيف الأرباح/ساعة", f"${financial_loss_hr:,.2f}", delta="خسارة مادية", delta_color="inverse")
+with m3:
+    st.metric("خسارة كل دقيقة", f"${financial_loss_min:,.2f}")
+with m4:
+    status = "🔴 CRITICAL" if loss_perc > 2 else "🟢 STABLE"
+    st.metric("الوضع الحالي", status)
 
-# 4. محاكاة نظام الألياف الضوئية (Fiber Optic DAS/DTS)
-st.subheader("📡 مراقبة النبض الصوتي والحراري (Fiber Optic Sensing)")
-x_km = np.linspace(0, pipe_length, 1000)
-acoustic_signal = np.random.normal(20, 2, 1000) # Noise طبيعي
-
-if is_leak:
-    # عمل طفرة (Spike) في مكان التسريب
-    leak_idx = int((leak_location / pipe_length) * 1000)
-    acoustic_signal[leak_idx-20:leak_idx+20] += np.random.normal(50, 5, 40)
-
-fig_fiber = px.line(x=x_km, y=acoustic_signal, title="تحليل الترددات الصوتية على طول الخط")
-fig_fiber.update_traces(line_color="#ff0055")
-st.plotly_chart(fig_fiber, use_container_width=True)
-
-
-# 5. الخريطة الجغرافية والتحليل المكاني
+# 5. التتبع الجغرافي والألياف الضوئية
 st.markdown("---")
 c1, c2 = st.columns([1, 1])
 
 with c1:
-    st.subheader("📍 التتبع الجغرافي (GPS)")
-    # إحداثيات افتراضية تتغير مع مكان التسريب
-    base_lat, base_lon = 30.0, 31.0
-    leak_lat = base_lat + (leak_location * 0.001)
-    leak_lon = base_lon + (leak_location * 0.001)
+    st.subheader("📍 الموقع الجغرافي الدقيق")
+    # إحداثيات افتراضية تتغير مع حجم التسريب
+    df_map = pd.DataFrame({'lat': [30.044 + (loss*0.0001)], 'lon': [31.235 + (loss*0.0001)]})
+    st.map(df_map, zoom=12 if loss > 0 else 8)
     
-    map_data = pd.DataFrame({'lat': [leak_lat], 'lon': [leak_lon]})
-    st.map(map_data, zoom=11 if is_leak else 8)
 
 with c2:
-    st.subheader("📸 الذكاء الاصطناعي وصور الأقمار الصناعية")
-    st.write("ارفع صورة القمر صناعي لتحليل البقع الزيتية:")
-    up_file = st.file_uploader("", type=["jpg", "png"])
-    if up_file:
-        st.image(up_file, caption="جاري المسح الطيفي...", use_container_width=True)
-        if is_leak:
-            st.warning("⚠️ تم رصد بقعة زيت سطحية بمساحة تقدر بـ 1200 متر مربع")
-        else:
-            st.success("✅ لا توجد بقع زيتية مرئية")
+    st.subheader("📡 بصمة الصوت (Fiber Optic Sensing)")
+    x = np.linspace(0, 100, 500)
+    noise = np.random.normal(5, 1, 500)
+    if loss > 50:
+        noise[int(leak_loc * 5)] += 20  # ذروة الصوت عند التسريب
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=noise, name="Acoustic Signal", line=dict(color='#ff0055', width=2)))
+    fig.update_layout(title="تحليل ضوضاء التسريب على طول 100 كم", template="plotly_dark", height=300)
+    st.plotly_chart(fig, use_container_width=True)
+    
 
-# 6. التقرير الاقتصادي وبروتوكول الطوارئ
-st.markdown("---")
-if is_leak:
-    st.subheader("⚠️ بروتوكول الاستجابة السريعة")
+# 6. نظام الاستجابة للطوارئ
+if loss > 0:
+    st.divider()
     col_a, col_b = st.columns(2)
     with col_a:
-        st.error(f"تنبيه: الخط يخسر حالياً {loss_hr * 24 * oil_price:,.0f}$ يومياً!")
-        if st.button("🚨 تفعيل الإغلاق الاضطراري (ESD)"):
-            st.critical("تم إرسال إشارة إغلاق الصمامات للمحطات رقم 4 و 5")
+        st.warning(f"⚠️ تنبيه: إذا استمر التسريب لمدة 24 ساعة، ستصل الخسائر إلى ${financial_loss_hr * 24:,.2f}")
     with col_b:
-        st.info("📋 توصية النظام: إرسال فريق صيانة فوراً للكيلو " + str(round(leak_location, 2)))
-        st.download_button("تحليل البيانات للتحقيق (CSV)", 
-                           pd.DataFrame({"KM": x_km, "Signal": acoustic_signal}).to_csv(), 
-                           "leak_report.csv")
+        if st.button("🔴 تفعيل الإغلاق الاضطراري (ESD) فوراً"):
+            st.error("🚨 تم إرسال إشارة إغلاق المحابس المركزية.. تم إبلاغ فرق الطوارئ.")
+            st.balloons()
