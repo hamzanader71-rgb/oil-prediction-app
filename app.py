@@ -1,76 +1,100 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px # للمخططات التفاعلية
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="Hamza AI Ultimate", page_icon="⚡", layout="wide")
+# 1. إعدادات المنصة الاحترافية
+st.set_page_config(page_title="Hamza Oilfield AI", page_icon="🛢️", layout="wide")
 
-# تصميم الواجهة
+# تصميم واجهة المستقبل (UI/UX)
 st.markdown("""
     <style>
-    .stApp { background: radial-gradient(circle, #050a10 0%, #000000 100%); color: #00ffcc; }
+    .stApp { background: #050a10; color: #00ffcc; }
     .stSidebar { background-color: #0a1420 !important; border-right: 2px solid #00ffcc; }
-    .stMetric { background-color: #0e1621; padding: 15px; border-radius: 15px; border: 1px solid #00ffcc; }
+    .stMetric { background-color: #0e1621; padding: 15px; border-radius: 15px; border: 1px solid #00ffcc; box-shadow: 0px 0px 10px #00ffcc; }
     .stButton>button { 
         background: linear-gradient(90deg, #00ffcc, #0088ff); 
         color: black; font-weight: bold; border-radius: 20px;
-        box-shadow: 0px 0px 15px #00ffcc; width: 100%;
+        box-shadow: 0px 0px 15px #00ffcc; width: 100%; transition: 0.5s;
     }
+    .stButton>button:hover { transform: scale(1.02); box-shadow: 0px 0px 25px #00ffcc; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. القائمة الجانبية المباشرة
-menu = st.sidebar.radio("المحرك الفني:", [
-    "📊 منصة التحليل (20 معامل)",
-    "🏗️ مراقبة الحفر واللزوجة",
-    "📊 تصدير التقارير"
-])
+# 2. القائمة الجانبية المتكاملة
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/2933/2933833.png", width=100)
+    st.title("🤖 Hamza AI Center")
+    menu = st.radio("انتقل إلى:", [
+        "📊 منصة التحليل (20 معامل)",
+        "🔮 التنبؤ بالإنتاج (AI Forecast)",
+        "🏗️ مراقبة الحفر واللزوجة",
+        "🌡️ توقع ضغط الطبقات (Pore Pressure)",
+        "⚙️ محول الوحدات الهندسي",
+        "📂 مركز التقارير الذكية"
+    ])
 
-# ---------------------------------------------------------
-# القسم 1: الـ 20 معامل
+# --- القسم 1: الـ 20 معامل ---
 if menu == "📊 منصة التحليل (20 معامل)":
-    st.write("### ⛽ أدخل معاملات البئر الـ 20:")
-    
+    st.title("⛽ منصة تحليل المكامن (Reservoir Analysis)")
     col1, col2 = st.columns(2)
     with col1:
-        v1=st.number_input("1. العمق", 7000); v2=st.number_input("2. الضغط", 2500)
-        v3=st.number_input("3. الحرارة", 190); v4=st.number_input("4. المسامية", 18)
-        v5=st.number_input("5. النفاذية", 120); v6=st.number_input("6. تشبع الماء", 30)
-        v7=st.number_input("7. Skin Effect", 0); v8=st.number_input("8. السمك (h)", 50)
-        v9=st.number_input("9. القطر", 8); v10=st.number_input("10. الميل", 0)
+        v1=st.number_input("العمق (ft)", 7000); v2=st.number_input("الضغط (psi)", 2500)
+        v3=st.number_input("الحرارة (°F)", 190); v5=st.number_input("النفاذية (mD)", 120)
     with col2:
-        v11=st.number_input("11. API", 34); v12=st.number_input("12. اللزوجة", 1.5)
-        v13=st.number_input("13. GOR", 400); v14=st.number_input("14. الماء", 10)
-        v15=st.number_input("15. ضغط الرأس", 400); v16=st.number_input("16. ضغط القاع", 2000)
-        v17=st.number_input("17. الخانق", 32); v18=st.number_input("18. كثافة الغاز", 0.6)
-        v19=st.number_input("19. الملوحة", 40000); v20=st.number_input("20. الأيام", 30)
+        v12=st.number_input("اللزوجة (cp)", 1.5); v16=st.number_input("ضغط القاع (BHP)", 2000)
+        v20=st.number_input("عدد الأيام", 30)
 
-    if st.button("🚀 تحليل البيانات"):
+    if st.button("🚀 تشغيل المحاكي الرقمي"):
         res = (v2 - v16) * (v5 / v12) * (v20 / 30)
-        st.markdown(f"### 📈 الإنتاج المتوقع: **{max(0, res):.2f}** STB/D")
-        
-        # رسم بياني بسيط
-        chart_data = pd.DataFrame(np.random.randn(20, 1), columns=['Pressure Profile'])
-        st.line_chart(chart_data)
+        st.success(f"الإنتاج الحالي المحسوب: {max(0, res):.2f} STB/D")
+        st.balloons()
 
-# ---------------------------------------------------------
-# القسم 2: مراقبة الحفر واللزوجة
-elif menu == "🏗️ مراقبة الحفر واللزوجة":
-    st.write("### 🏗️ بارامترات الحفر الحالية")
+# --- القسم 2: التنبؤ بالمستقبل (AI Forecast) ---
+elif menu == "🔮 التنبؤ بالإنتاج (AI Forecast)":
+    st.title("🔮 التنبؤ بمنحنى الإنتاج (Decline Curve)")
+    qi = st.number_input("الإنتاج الابتدائي (Initial Production)", value=2000)
+    decline_rate = st.slider("معدل الهبوط السنوي (%)", 1, 50, 15)
+    years = st.slider("سنوات التوقع", 1, 10, 5)
+
+    # معادلة التنبؤ (Exponential Decline)
+    time_range = np.arange(0, years * 12)
+    q_forecast = qi * np.exp(-(decline_rate/100) * (time_range/12))
     
-    # ربط اللزوجة بالمدخل رقم 12 والضغط بالمدخل رقم 2
+    df_forecast = pd.DataFrame({"الشهر": time_range, "الإنتاج المتوقع": q_forecast})
+    fig = px.area(df_forecast, x="الشهر", y="الإنتاج المتوقع", title="توقع إنتاج البئر للسنوات القادمة")
+    st.plotly_chart(fig, use_container_width=True)
+    st.info(f"إجمالي الإنتاج التراكمي المتوقع: {int(q_forecast.sum())} برميل")
+
+# --- القسم 3: مراقبة الحفر واللزوجة ---
+elif menu == "🏗️ مراقبة الحفر واللزوجة":
+    st.title("🏗️ مراقبة بارامترات الحفر المباشرة")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Viscosity (اللزوجة)", "1.5 cp")
-    c2.metric("Mud Weight", "9.5 ppg")
-    c3.metric("Pressure (الضغط)", "2500 psi")
+    c1.metric("Viscosity (اللزوجة)", "45 cp", "+2")
+    c2.metric("Mud Weight", "9.8 ppg", "-0.1")
+    c3.metric("ROP (سرعة الحفر)", "120 ft/hr")
     
     st.write("---")
-    st.write("#### 📈 مراقبة سرعة الحفر (ROP)")
-    st.area_chart(np.random.randint(10, 100, 15))
+    st.subheader("📊 مراقبة الضغط والاهتزاز")
+    st.line_chart(np.random.randint(2400, 2600, 24))
 
-# ---------------------------------------------------------
-# القسم 3: التقارير
+# --- القسم 4: محول الوحدات الهندسي ---
+elif menu == "⚙️ محول الوحدات الهندسي":
+    st.title("⚙️ محول وحدات الحقل")
+    val = st.number_input("أدخل القيمة:", value=1.0)
+    unit_type = st.selectbox("من:", ["PSI to Bar", "Feet to Meter", "BBL to M3"])
+    
+    if unit_type == "PSI to Bar":
+        st.write(f"النتيجة: {val * 0.0689:.4f} Bar")
+    elif unit_type == "Feet to Meter":
+        st.write(f"النتيجة: {val * 0.3048:.4f} Meter")
+    elif unit_type == "BBL to M3":
+        st.write(f"النتيجة: {val * 0.1589:.4f} M3")
+
+# --- القسم 5: التقارير ---
 else:
-    st.write("### 📊 مركز الملفات")
-    if st.button("Generate Excel Report"):
-        st.success("تم إنشاء التقرير بنجاح!")
+    st.title("📂 مركز التقارير الذكية")
+    st.write("تجميع كافة البيانات الحالية في تقرير واحد.")
+    if st.button("Generate Master PDF Report"):
+        st.snow()
+        st.success("جاري تصدير التقرير النهائي...")
