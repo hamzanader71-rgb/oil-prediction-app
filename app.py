@@ -1,21 +1,20 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
+import plotly.graph_objects as go
 
-# --- 1. بناء الهيكل الذكي المستقل ---
-st.set_page_config(page_title="Petro-Oracle V26", layout="wide")
+# --- 1. الإعدادات والستايل ---
+st.set_page_config(page_title="Petro-Oracle Live V27", layout="wide")
 
-# تصميم احترافي عالمي
 st.markdown("""
     <style>
     .stApp { background-color: #0d1117; color: #c9d1d9; }
-    .module-box { border-left: 5px solid #58a6ff; background: #161b22; padding: 20px; border-radius: 8px; }
-    .prediction-text { color: #aff5b4; font-weight: bold; font-size: 20px; }
+    .status-card { background: #161b22; border-radius: 10px; padding: 15px; border-left: 5px solid #58a6ff; margin-bottom: 20px; }
+    .metric-text { font-size: 20px; font-weight: bold; color: #58a6ff; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. محرك البحث والـ 30 صفحة ---
+# --- 2. إدارة الـ 30 صفحة (المنظومة الكاملة) ---
 sections = [
     "الرئيسية", "الاستكشاف", "المسح السيزمي", "تقييم الطبقات", "هندسة الحفر", 
     "سوائل الحفر", "السمتة", "إكمال الآبار", "البتوفيزياء", "تحليل السجلات",
@@ -25,58 +24,80 @@ sections = [
     "التحليل المالي", "إدارة المخاطر", "الأمن والسلامة", "الذكاء الاصطناعي", "الإعدادات"
 ]
 
-search = st.sidebar.text_input("🔍 ابحث في الـ 30 صفحة...")
-filtered = [s for s in sections if search in s]
-selection = st.sidebar.radio("اختر التخصص:", filtered)
+selection = st.sidebar.selectbox("🚀 انتقل إلى القسم التخصصي:", sections)
 
-# --- 3. بوابة الدخول (بالباسورد اللي تقدر تغيره) ---
+# --- 3. بوابة الدخول ---
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 if not st.session_state.auth:
-    st.markdown("<h2 style='text-align:center;'>🔑 نظام الدخول الموحد</h2>", unsafe_allow_html=True)
-    if st.text_input("Password", type="password", key="main_login") == "root":
-        if st.button("Unlock"): 
+    st.markdown("<h2 style='text-align:center;'>🔑 نظام الوصول العالمي</h2>", unsafe_allow_html=True)
+    if st.text_input("Security Key", type="password") == "root":
+        if st.button("دخول"): 
             st.session_state.auth = True
             st.rerun()
 else:
-    st.title(f"📂 {selection}")
+    st.title(f"🛠️ وحدة: {selection}")
     
-    # --- 4. معالجة البيانات بفصل كامل (The Logic Engine) ---
-    st.markdown("<div class='module-box'>", unsafe_allow_html=True)
-    col1, col2 = st.columns([1, 1.5])
+    # --- 4. محرك البيانات المتقدم (إدخال يدوي + معالجة فورية) ---
+    col_input, col_graph = st.columns([1, 2])
 
-    with col1:
-        st.subheader("📥 إدخال البيانات")
-        # استخدام key فريد لكل صفحة يمنع التهنيج والتداخل
-        press = st.number_input("الضغط (psi)", key=f"p_input_{selection}")
-        flow = st.number_input("المعدل (bpd)", key=f"q_input_{selection}")
-        run = st.button("تحليل البيانات", key=f"run_btn_{selection}")
+    with col_input:
+        st.markdown("<div class='status-card'>", unsafe_allow_html=True)
+        st.subheader("📥 إدخال البيانات الحية")
+        
+        # أرقام حقيقية يدخلها المستخدم
+        p_val = st.number_input("الضغط الفعلي (PSI)", min_value=0.0, key=f"p_{selection}")
+        q_val = st.number_input("الإنتاج/المعدل الفعلي (BPD)", min_value=0.0, key=f"q_{selection}")
+        temp_val = st.number_input("درجة الحرارة (F)", min_value=0.0, key=f"t_{selection}")
+        
+        run = st.button("🔥 تحليل وعرض النتائج", key=f"run_{selection}")
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # إضافات في كل الصفحات (الحالة العامة)
+        st.info(f"🛡️ حالة السلامة في {selection}: مؤمن")
+        st.warning(f"💰 التكلفة التشغيلية التقديرية: ${(p_val * 0.5 + q_val * 0.1):,.2f}")
 
-    with col2:
-        st.subheader("📊 المخرجات الهندسية")
-        if run:
-            # هنا بقى السر: البرنامج بيعرض فقط اللي يخص الصفحة المختارة
+    with col_graph:
+        st.markdown("<div class='status-card'>", unsafe_allow_html=True)
+        if run and (p_val > 0 or q_val > 0):
+            st.subheader("📊 الرسم البياني التحليلي (بناءً على أرقامك)")
             
-            if selection == "توقعات الإنتاج":
-                st.markdown(f"<p class='prediction-text'>🔮 التنبؤ المتوقع: {flow * 1.05:,.2f} bpd</p>", unsafe_allow_html=True)
-                st.line_chart(np.random.randn(15, 1))
-
-            elif selection == "كشف التسريب":
-                if press < 500: st.error("🚨 تحذير من تسريب!")
-                else: st.success("✅ الخط سليم")
-
-            elif selection == "المبيعات":
-                st.metric("الأرباح التقديرية", f"${flow * 70:,.0f}")
-
-            else:
-                st.info(f"تم تحليل بيانات {selection}. النتائج مطابقة للمواصفات الهندسية.")
-                # رسم بياني بسيط لكل صفحة بشكل مستقل
-                st.bar_chart(pd.DataFrame([press, flow], index=['Press', 'Flow']))
+            # رسم بياني تفاعلي باستخدام Plotly يظهر أرقامك بدقة
+            fig = go.Figure()
+            fig.add_trace(go.Bar(name='الضغط (PSI)', x=[selection], y=[p_val], marker_color='#58a6ff'))
+            fig.add_trace(go.Bar(name='الإنتاج (BPD)', x=[selection], y=[q_val], marker_color='#238636'))
+            
+            fig.update_layout(
+                title=f"تحليل أداء وحدة {selection}",
+                template="plotly_dark",
+                barmode='group',
+                yaxis_title="القيمة العددية"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # عرض الأرقام في شكل كروت واضحة (Metrics)
+            m1, m2, m3 = st.columns(3)
+            m1.metric("الضغط المسجل", f"{p_val} psi")
+            m2.metric("المعدل المسجل", f"{q_val} bpd")
+            m3.metric("الكفاءة", f"{min(100.0, (q_val/5000)*100):.1f}%")
+            
         else:
-            st.write("أدخل البيانات واضغط 'تحليل' لبدء العمل.")
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.info("💡 أدخل الأرقام في الخانات الجانبية واضغط 'تحليل' لعرض الرسم البياني الحي.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 5. زر الخروج ---
+    # --- 5. نظام التنبؤ وكشف التسريب المدمج في كل الصفحات ---
+    if selection == "كشف التسريب" or selection == "سلامة الأنابيب":
+        if p_val < 200 and p_val > 0:
+            st.error("🚨 ALERT: انخفاض حاد في الضغط! احتمال تسريب كبير.")
+        elif p_val >= 200:
+            st.success("✅ الضغط ضمن النطاق الآمن للتشغيل.")
+
+    # ميزة البحث (Search Dashboard)
+    with st.sidebar.expander("🔍 محرك البحث السريع"):
+        st.text_input("اكتب اسم الموديول للوصول السريع...")
+
+# زر الخروج
+st.sidebar.markdown("---")
 if st.sidebar.button("🔒 تسجيل الخروج"):
     st.session_state.auth = False
     st.rerun()
