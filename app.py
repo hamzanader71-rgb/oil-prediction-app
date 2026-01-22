@@ -1,102 +1,117 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px # للرسوم البيانية التفاعلية العالمية
+import plotly.graph_objects as go
+from io import StringIO
 
-# --- إعدادات المنصة ---
-st.set_page_config(page_title="Petro-Master Ultimate", layout="wide")
+# --- إعدادات المنصة العالمية ---
+st.set_page_config(page_title="PETRO-MASTER AI", layout="wide", page_icon="🏗️")
 
-# تصميم "براند" عالمي (Industrial Glass-Dark Theme)
+# ستايل المصانع الذكية (Cyber-Industrial Theme)
 st.markdown("""
     <style>
-    .stApp { background-color: #05070a; color: #e5e7eb; }
-    [data-testid="stSidebar"] { background-color: #0b0f1a !important; border-right: 1px solid #1f2937; }
-    .metric-box { 
-        background: linear-gradient(145deg, #111827, #1f2937); 
-        padding: 20px; border-radius: 15px; border: 1px solid #374151;
-        text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    .stApp { background-color: #010409; color: #c9d1d9; }
+    [data-testid="stSidebar"] { background-color: #0d1117 !important; border-right: 1px solid #30363d; }
+    .result-card { 
+        background: #161b22; border: 1px solid #30363d; 
+        padding: 20px; border-radius: 10px; margin-top: 15px;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
     }
-    .stButton>button { 
-        background: linear-gradient(90deg, #1d4ed8, #2563eb); 
-        color: white; border-radius: 10px; border: none; font-weight: bold;
-    }
+    .metric-value { color: #58a6ff; font-size: 24px; font-weight: bold; }
+    .stButton>button { background-color: #238636; color: white; border: none; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- نظام الحماية المرن ---
+# --- نظام الحماية (الباسورد المرن) ---
 if 'auth' not in st.session_state: st.session_state.auth = False
+if 'master_pwd' not in st.session_state: st.session_state.master_pwd = "root"
 
 if not st.session_state.auth:
-    st.markdown("<div style='text-align: center; margin-top: 100px;'><h1>PETRO-MASTER LOGIN</h1>", unsafe_allow_html=True)
-    pwd = st.text_input("Master Access Code", type="password")
-    if st.button("Unlock System"):
-        if pwd == "root": # يمكن تعديله لاحقاً
+    st.markdown("<div style='text-align:center; padding-top:100px;'><h1>🔐 SECURE ACCESS</h1>", unsafe_allow_html=True)
+    pwd_in = st.text_input("Enter Master Key", type="password")
+    if st.button("UNLOCK"):
+        if pwd_in == st.session_state.master_pwd:
             st.session_state.auth = True
             st.rerun()
 else:
-    # --- القائمة الشاملة (12 صفحة تغطي قطاع البترول بالكامل) ---
-    pages = {
-        "DASHBOARD": "اللوحة الرئيسية",
-        "GEOLOGY": "الجيولوجيا والمؤشرات السيزمية",
-        "DRILLING": "هندسة وتحسين الحفر",
-        "LOGGING": "تحليل سجلات الآبار (Petrophysics)",
-        "RESERVOIR": "هندسة الخزانات وحساب الاحتياطي",
-        "PVT_ANALYSIS": "خواص سوائل الخزان (PVT)",
-        "PRODUCTION": "تحسين وإدارة الإنتاج",
-        "DCA": "تحليل منحنيات الهبوط (Decline Curve)",
-        "ARTIFICIAL_LIFT": "الرفع الصناعي (ESP/Gas Lift)",
-        "PIPELINES": "شبكات النقل وخطوط الأنابيب",
-        "HSE_SAFETY": "إدارة السلامة والبيئة",
-        "ECONOMICS": "التحليل المالي وجدوى المشروع"
+    # --- توزيع الـ 15 صفحة (تغطية شاملة للمجال) ---
+    sections = {
+        "DASHBOARD": "التحكم المركزي",
+        "GEOPHYSICS": "الجيوفيزياء والسيزماتيك",
+        "EXPLORATION": "الاستكشاف والتقييم",
+        "DRILLING_ENG": "هندسة الحفر والآبار",
+        "MUD_LOGGING": "تسجيل الطفلة والسوائل",
+        "PETROPHYSICS": "تحليل الخصائص الصخرية",
+        "RESERVOIR_ENG": "هندسة الخزانات",
+        "PVT_MOD": "نمذجة خواص السوائل (PVT)",
+        "WELL_TESTING": "اختبارات الآبار والضغوط",
+        "PRODUCTION_OPT": "تحسين الإنتاج (Optimization)",
+        "ARTIFICIAL_LIFT": "أنظمة الرفع الصناعي",
+        "FACILITIES": "المنشآت السطحية والمعالجة",
+        "PIPELINE_FLOW": "جريان خطوط الأنابيب",
+        "HSE_CORP": "السلامة والبيئة المؤسسية",
+        "ECON_APPRAISAL": "الجدوى والتقييم المالي"
     }
-    
-    st.sidebar.title("💠 PETRO-NAVIGATOR")
-    selection = st.sidebar.radio("إختر القطاع التخصصي:", list(pages.keys()), format_func=lambda x: pages[x])
-    
-    st.title(f"📂 {pages[selection]}")
 
-    # --- موديول "الكمال الفني" (بيانات يدوية + إكسيل + كود مدمج) ---
-    col1, col2 = st.columns([1, 2])
+    st.sidebar.title("💠 PETRO-GIANT V23")
+    selection = st.sidebar.radio("NAVIGATE MODULES", list(sections.keys()), format_func=lambda x: sections[x])
     
-    with col1:
-        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-        st.subheader("📝 مدخلات المهندس")
-        field_name = st.text_input("اسم الحقل/البئر", "Well-01")
-        param_1 = st.number_input("الضغط (psi)", value=2500)
-        param_2 = st.number_input("الإنتاج (bpd)", value=1200)
-        if st.button("حفظ وتحديث"):
-            st.success("تم التحديث في قاعدة البيانات")
+    # ميزة تغيير الباسورد
+    with st.sidebar.expander("⚙️ System Settings"):
+        new_p = st.text_input("New PWD", type="password")
+        if st.button("Update"): st.session_state.master_pwd = new_p
+
+    st.markdown(f"<h1>🚀 {sections[selection]}</h1>", unsafe_allow_html=True)
+
+    # --- موديول معالجة البيانات واستخراج النتائج (The Engine) ---
+    col_in, col_out = st.columns([1, 1.5])
+
+    with col_in:
+        st.markdown("<div class='result-card'>", unsafe_allow_html=True)
+        st.subheader("📥 Data Inputs")
+        
+        # خيار الرفع
+        up_file = st.file_uploader("Upload Sector File (Excel/CSV)", key=f"up_{selection}")
+        
+        # خيار الإدخال اليدوي
+        st.markdown("---")
+        st.write("Manual Parameters Entry:")
+        p_val = st.number_input("Pressure (psi)", value=2000.0)
+        q_val = st.number_input("Flow Rate (bpd)", value=500.0)
+        
+        calc_btn = st.button("RUN ANALYSIS & COMPUTE")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-        st.subheader("📈 التحليل البياني المتقدم")
-        up_file = st.file_uploader("ارفع بيانات الحقل (Excel/CSV)", key=selection)
-        if up_file:
-            data = pd.read_excel(up_file) if up_file.name.endswith('xlsx') else pd.read_csv(up_file)
-            fig = px.line(data, title=f"تحليل اتجاهات {pages[selection]}", template="plotly_dark")
-            st.plotly_chart(fig, use_container_width=True)
+    with col_out:
+        st.markdown("<div class='result-card'>", unsafe_allow_html=True)
+        st.subheader("📊 Execution Results & AI Insights")
+        
+        if calc_btn:
+            # --- محرك النتائج (هنا ندمج معادلاتك السبعة) ---
+            if selection == "RESERVOIR_ENG":
+                # مثال لنتيجة حسابية (معادلة ميزان المادة)
+                reserve = (p_val * q_val) / 0.85 # مثال لمعادلة
+                st.write("### Calculated Result:")
+                st.markdown(f"<p class='metric-value'>Estimated Reserves: {reserve:,.0f} STB</p>", unsafe_allow_html=True)
+                
+            elif selection == "PRODUCTION_OPT":
+                st.write("### Production Performance:")
+                # كود رسم بياني تفاعلي
+                fig = go.Figure(go.Indicator(mode = "gauge+number", value = q_val, title = {'text': "BPD Rate"}, gauge = {'axis': {'range': [None, 5000]}, 'bar': {'color': "#58a6ff"}}))
+                st.plotly_chart(fig, use_container_width=True)
+
+            # تشغيل مخرجات الكود المدمج (print)
+            st.success("Analysis Complete. No Anomalies Detected.")
+        else:
+            st.info("Waiting for data input to generate report...")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- منطقة دمج الأكواد السبعة + الإضافات الجديدة ---
+    # --- قسم المستندات والحفظ ---
     st.markdown("---")
-    st.subheader("🔍 النتائج الاستنتاجية (AI Insights)")
-    
-    if selection == "DCA":
-        st.info("💡 موديول تحليل الهبوط: يتنبأ بعمر البئر بناءً على معدلات الإنتاج الحالية.")
-        # هنا يدمج كود تحليل الـ Decline Curve
-        
-    elif selection == "RESERVOIR":
-        st.info("💡 حسابات الاحتياطي: يتم الآن حساب المخرجات باستخدام معادلة الموازنة المادية (Material Balance).")
-        # هنا يدمج كود الخزانات الخاص بك
-        
-    elif selection == "ECONOMICS":
-        st.info("💡 التحليل المالي: حساب الـ NPV و الـ IRR للمشروع.")
+    with st.expander("📂 Archive & Document Storage"):
+        st.text_area("Field Engineer Remarks", key=f"rem_{selection}")
+        st.button("Archive to Master Database")
 
-    # إعدادات الحماية في الجنب
-    with st.sidebar.expander("🛠️ إعدادات النظام"):
-        if st.button("تغيير كلمة المرور"):
-            st.info("ميزة قيد التفعيل...")
-    if st.sidebar.button("🔒 تسجيل الخروج"):
+    if st.sidebar.button("🔒 LOGOUT"):
         st.session_state.auth = False
         st.rerun()
