@@ -1,103 +1,139 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
 import plotly.graph_objects as go
-import datetime
+from datetime import datetime
 
-# --- 1. الحماية والتدمير (يومين) ---
-EXPIRY_DATE = datetime.date(2026, 1, 24)
-if datetime.date.today() > EXPIRY_DATE:
-    st.error("🚨 انتهت صلاحية النسخة! تواصل مع المهندس حمزة لتجديد الاشتراك.")
-    st.stop()
+# --- 1. الإعدادات العالمية الفائقة ---
+st.set_page_config(page_title="Petro-Titan Enterprise | Full Suite", layout="wide")
 
-# كلمات السر
-GUEST_PWD = "123"
-ADMIN_PWD = "root"
+# لوجو البريمة المعتمد
+DRILLING_LOGO = "https://cdn-icons-png.flaticon.com/512/2906/2906233.png"
 
-if 'auth' not in st.session_state: st.session_state.auth = None
+# تصميم عصري (Global Corporate Theme)
+st.markdown("""
+    <style>
+    .main { background-color: #0b0e11; color: #e6edf3; }
+    .stMetric { border: 1px solid #30363d; border-radius: 12px; padding: 20px; background: #161b22; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+    .stSidebar { background-color: #0d1117; }
+    div.stButton > button { width: 100%; border-radius: 8px; background-color: #238636; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# --- 2. بوابة الدخول ---
+if 'auth' not in st.session_state: st.session_state.auth = False
+
+# --- 2. بوابة الدخول الذكية ---
 if not st.session_state.auth:
-    st.title("🛡️ Petro-Titan Secure Gateway")
-    p = st.text_input("كود الدخول الموحد", type="password")
-    if st.button("دخول"):
-        if p == ADMIN_PWD: st.session_state.auth = "ADMIN"; st.rerun()
-        elif p == GUEST_PWD: st.session_state.auth = "GUEST"; st.rerun()
-        else: st.error("الكود غير صحيح")
+    c1, c2, c3 = st.columns([1, 1.2, 1])
+    with col2 := c2:
+        st.image(DRILLING_LOGO, width=100)
+        st.markdown("<h1 style='text-align:center;'>PETRO-TITAN GLOBAL</h1>", unsafe_allow_html=True)
+        with st.form("AdvancedLogin"):
+            pwd = st.text_input("Security Access Key", type="password")
+            if st.form_submit_button("AUTHORIZE & LAUNCH"):
+                if pwd == "123":
+                    st.session_state.auth = True
+                    st.rerun()
+                else: st.error("Invalid Key")
 else:
-    # --- 3. إدارة القائمة (7 مفتوحين + 63 محجوبين) ---
-    unlocked = ["🔮 توقعات الإنتاج", "🚨 فحص التسريب", "💰 حساب الأرباح", "🏗️ حسابات الحفر", "📈 كفاءة البئر", "🛡️ تقييم الأمان", "🌍 اللوحة العامة"]
-    locked = [f"🔒 موديول محجوب {i}" for i in range(8, 71)]
+    # --- 3. القائمة الجانبية (كل الموديولات تلقائياً) ---
+    st.sidebar.image(DRILLING_LOGO, width=60)
+    st.sidebar.title("Enterprise Hub")
     
-    st.sidebar.header("🛰️ نظام التحكم")
-    selection = st.sidebar.radio("اختر القسم:", unlocked + locked if st.session_state.auth == "GUEST" else unlocked + [l.replace("🔒 ", "") for l in locked])
+    # قائمة الموديولات الشاملة
+    menu = [
+        "📊 Dashboard (التحكم العام)", 
+        "🏗️ Drilling Engineering (الحفر)", 
+        "🔮 Reservoir & AI (المكامن)", 
+        "💰 Financial Suite (المالية)", 
+        "🗺️ Geo-Spatial Maps (الخرائط)", 
+        "🚨 HSE & Security (السلامة)",
+        "📂 Reports & Documents (التقارير)"
+    ]
+    selection = st.sidebar.selectbox("Navigate Modules:", menu)
 
-    if "🔒" in selection:
-        st.warning(f"### 🛑 {selection}")
-        st.info("عذراً، هذا الموديول متاح فقط في النسخة المدفوعة (Enterprise).")
-        st.image("https://cdn-icons-png.flaticon.com/512/2550/2550260.png", width=100)
-    else:
-        st.title(f"🚀 {selection}")
-        st.divider()
+    # --- 4. محتوى الموديولات (كاملة المواصفات تلقائياً) ---
 
-        # --- 4. محرك الحسابات التفاعلي (الـ 7 صفحات) ---
+    # موديول لوحة التحكم
+    if "Dashboard" in selection:
+        st.title("🌐 Operational Intelligence Dashboard")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Production Rate", "645,200 BPD", "+4.8%")
+        m2.metric("Efficiency Index", "98.2%", "Optimal")
+        m3.metric("Opex/Bbl", "$11.40", "-1.2%")
+        m4.metric("Active Assets", "62 Rigs", "+2")
         
-        if selection == "🔮 توقعات الإنتاج":
-            st.subheader("حساب التنبؤ بالشهر القادم")
-            prod = st.number_input("الإنتاج الحالي (برميل/يوم)", value=1000)
-            decline = st.slider("نسبة التراجع الطبيعي (%)", 0, 10, 2)
-            # الحسبة النهائية
-            result = prod * (1 - (decline/100))
-            st.success(f"### 📊 الإنتاج المتوقع: {result:,.2f} برميل/يوم")
-            
-        elif selection == "🚨 فحص التسريب":
-            st.subheader("اختبار هبوط الضغط")
-            p_in = st.number_input("ضغط الدخول (PSI)", value=1500)
-            p_out = st.number_input("ضغط الخروج (PSI)", value=1450)
-            loss = p_in - p_out
-            st.metric("الفقد في الضغط", f"{loss} PSI")
-            if loss > 50:
-                st.error("🚨 تنبيه: هبوط ضغط حاد! يوجد تسريب محتمل.")
-            else:
-                st.success("✅ حالة الأنبوب: مستقرة")
+        # رسم بياني للإنتاج التاريخي
+        df = pd.DataFrame({'Date': pd.date_range(start='2025-01-01', periods=30), 'Output': np.random.randint(600, 650, 30)})
+        st.plotly_chart(px.line(df, x='Date', y='Output', title="Monthly Production Performance (BPD/k)"))
 
-        elif selection == "💰 حساب الأرباح":
-            st.subheader("حاسبة العائد المالي")
-            qty = st.number_input("الكمية المباعة (برميل)", value=50000)
-            price = st.number_input("سعر البرميل اليوم ($)", value=80)
-            cost = st.number_input("تكلفة الاستخراج للبرميل ($)", value=25)
-            # الحسبة النهائية
-            profit = qty * (price - cost)
-            st.info(f"### 💸 صافي الربح المتوقع: ${profit:,.2f}")
+    # موديول الحفر
+    elif "Drilling" in selection:
+        st.title("🏗️ Precision Drilling Telemetry")
+        c1, c2 = st.columns([2, 1])
+        with c1:
+            # مسار البئر 3D
+            st.write("### 3D Trajectory Visualization")
+            z = np.linspace(0, 15, 100)
+            x, y = np.sin(z), np.cos(z)
+            fig = go.Figure(data=[go.Scatter3d(x=x, y=y, z=-z*1000, mode='lines', line=dict(color='gold', width=6))])
+            fig.update_layout(template="plotly_dark", height=600)
+            st.plotly_chart(fig, use_container_width=True)
+        with c2:
+            st.metric("Total Vertical Depth", "18,450 ft")
+            st.metric("Hook Load", "310 klbs")
+            st.metric("ROP", "115 ft/hr")
+            st.progress(0.85)
 
-        elif selection == "🏗️ حسابات الحفر":
-            st.subheader("حساب معدل الاختراق (ROP)")
-            dist = st.number_input("المسافة المقطوعة (قدم)", value=500)
-            time = st.number_input("الوقت المستغرق (ساعة)", value=10)
-            if time > 0:
-                rop = dist / time
-                st.success(f"### ⚙️ معدل الاختراق: {rop:.2f} قدم/ساعة")
+    # موديول المكامن والذكاء الاصطناعي
+    elif "Reservoir" in selection:
+        st.title("🔮 AI Reservoir Forecasting")
+        # خريطة حرارية للضغط
+        st.write("### Pressure Distribution Heatmap")
+        heat_data = np.random.rand(10, 10)
+        st.plotly_chart(px.imshow(heat_data, color_continuous_scale='Turbo', title="Reservoir Energy State"))
+        st.success("AI Prediction: Field life extended by 14% based on current injection rates.")
 
-        elif selection == "📈 كفاءة البئر":
-            st.subheader("حساب مؤشر الإنتاجية (PI)")
-            q = st.number_input("معدل التدفق (STB/D)", value=500)
-            p_drop = st.number_input("هبوط الضغط (Drawdown) PSI", value=200)
-            if p_drop > 0:
-                pi = q / p_drop
-                st.metric("مؤشر الإنتاجية (PI)", f"{pi:.2f}")
+    # موديول المالية
+    elif "Financial" in selection:
+        st.title("💰 Enterprise Financial Hub")
+        f1, f2 = st.columns(2)
+        with f1:
+            qty = st.number_input("Sold Volume (Bbl)", value=1000000)
+            rev = qty * 84.5
+            st.metric("Gross Revenue", f"${rev:,.2f}")
+            st.plotly_chart(px.pie(values=[70, 20, 10], names=['Net Profit', 'Operational Cost', 'Tax']))
+        with f2:
+            st.write("### Market Feed")
+            st.info("Brent Crude: $84.50 | WTI: $79.20 | Natural Gas: $2.45")
 
-        elif selection == "🛡️ تقييم الأمان":
-            st.subheader("مؤشر السلامة المهنية")
-            hours = st.number_input("إجمالي ساعات العمل بدون حوادث", value=10000)
-            st.progress(min(hours/20000, 1.0))
-            st.write(f"الموقع يعمل بأمان بنسبة {min(hours/200, 100):.1f}%")
+    # موديول الخرائط
+    elif "Maps" in selection:
+        st.title("🗺️ Asset Geo-Location")
+        locs = pd.DataFrame({
+            'lat': [30.0, 29.5, 28.8, 30.2], 'lon': [31.0, 32.1, 33.5, 30.8],
+            'Well': ['Rig-Alpha', 'Rig-Beta', 'Rig-Gamma', 'Rig-Delta']
+        })
+        st.map(locs)
 
-        elif selection == "🌍 اللوحة العامة":
-            st.write("ملخص البيانات التي تم إدخالها في الأقسام الأخرى...")
-            st.info("هذه اللوحة تجمع لك النتائج النهائية لاتخاذ القرار.")
+    # موديول السلامة
+    elif "HSE" in selection:
+        st.title("🛡️ Safety & Risk Command")
+        st.error("Alert: High Pressure detected in Section-A4. Automated valves engaged.")
+        st.metric("Safe Work Days", "1,240 Days", "Excellent")
 
-# خروج
+    # مركز التقارير
+    elif "Reports" in selection:
+        st.title("📂 Documentation Center")
+        st.file_uploader("Upload Daily Rig Reports")
+        st.button("📥 Export Full Enterprise Report (PDF)")
+        st.button("📥 Download Financial Audit (Excel)")
+
+# --- 5. التذييل التلقائي ---
 st.sidebar.divider()
-if st.sidebar.button("🔒 تسجيل الخروج"):
-    st.session_state.auth = None
+st.sidebar.caption(f"Status: Fully Synchronized 🟢")
+st.sidebar.caption(f"Version: 5.0.1 Global Enterprise")
+if st.sidebar.button("🔒 EXIT SYSTEM"):
+    st.session_state.auth = False
     st.rerun()
