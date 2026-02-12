@@ -1,105 +1,60 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+import time
 
-# --- 1. الإعدادات والستايل ---
-st.set_page_config(page_title="Petro-Titan Sovereign Infinity", layout="wide")
+# --- إعدادات النظام السيادي ---
+st.set_page_config(page_title="ULTRA SOVEREIGN V2", layout="wide", page_icon="🔐")
 
+# --- محرك التصميم الجبار (Advanced CSS) ---
 st.markdown("""
     <style>
-    .main { background-color: #0b0e14; color: #f8fafc; }
-    .stMetric { background: #161b22; border: 1px solid #38bdf8; border-radius: 12px; padding: 20px; }
-    .module-header { color: #38bdf8; font-weight: bold; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 20px; }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    .stApp { background: #050a0f; color: #00f2ff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .stButton>button { border-radius: 10px; background: transparent; border: 1px solid #00f2ff; color: #00f2ff; font-size: 18px; transition: 0.5s; width: 100%; }
+    .stButton>button:hover { background: #00f2ff; color: #000; box-shadow: 0 0 50px #00f2ff; }
+    .sidebar .sidebar-content { background: #0a1016; }
+    h1 { font-family: 'Orbitron', sans-serif; letter-spacing: 5px; text-shadow: 0 0 10px #00f2ff; }
     </style>
     """, unsafe_allow_html=True)
 
-if 'auth' not in st.session_state: st.session_state.auth = False
+# --- قاموس اللغات ---
+DICT = {
+    "English": {"greet": "SYSTEM ACTIVE", "secure": "SECURITY LEVEL: OPEN ACCESS"},
+    "العربية": {"greet": "النظام نشط", "secure": "مستوى الأمان: وصول مفتوح"},
+}
 
-# --- 2. بوابة الدخول ---
-if not st.session_state.auth:
-    col1, col2, col3 = st.columns([1, 1.2, 1])
-    with col2:
-        st.title("🛰️ SOVEREIGN INFINITY v10.0")
-        pwd = st.text_input("Enter Security Key", type="password")
-        if st.button("ACTIVATE SYSTEM"):
-            if pwd == "123":
-                st.session_state.auth = True
-                st.rerun()
-else:
-    # --- 3. بناء قائمة الـ 70 موديول (مقسمة لمجموعات) ---
-    st.sidebar.title("💎 Enterprise Hub")
+# اختيار اللغة
+st.sidebar.title("🌐 CORE LANG")
+lang_choice = st.sidebar.selectbox("", list(DICT.keys()))
+TXT = DICT[lang_choice]
+
+# --- محتوى المنصة (تم إلغاء شاشة الدخول) ---
+
+# شريط الأخبار الذكي
+st.markdown(f"<marquee style='background: #00f2ff; color: black; font-weight: bold;'> {TXT['greet']} | 🔓 {TXT['secure']} | AI INTEGRATION: 100% | SERVER: FRANKFURT </marquee>", unsafe_allow_html=True)
+
+# الأدوات الذكية في الجنب
+st.sidebar.markdown("### 🧠 AI ENGINE")
+st.sidebar.link_button("ChatGPT 4.0", "https://chat.openai.com")
+st.sidebar.link_button("DeepSeek AI", "https://chat.deepseek.com")
+
+st.sidebar.markdown("### 🔍 SEARCH GATE")
+query = st.sidebar.text_input("Google Search Engine")
+if query: st.sidebar.markdown(f"[Launch Search](https://www.google.com/search?q={query})")
+
+# لوحة التحكم الرئيسية
+st.title("🎛️ GLOBAL COMMAND CENTER")
+
+tab1, tab2, tab3 = st.tabs(["🚀 Control Panel", "📊 Big Data", "🔐 Secure Vault"])
+
+with tab1:
+    st.subheader("System Resources")
+    st.progress(92, text="Memory Optimization")
+    st.metric("Global Latency", "12ms", "-2ms")
     
-    # تعريف المجموعات
-    core_ops = ["🖥️ مركز القيادة الرئيسي", "⌨️ مدخلات البيانات اليدوية", "🏗️ محاكي الحفر 3D", "🔬 تحليل الطبقات الجيولوجية", "💰 الأرباح والتحليل المالي"]
-    tech_ops = [f"🧬 موديول تقني: {name}" for name in ["المسح السيزمي", "حقن الغاز", "تحليل السوائل", "تآكل الأنابيب", "ضغط المكمن"]]
-    secure_mods = [f"🔒 Specialized Module {i}" for i in range(11, 71)]
-    
-    all_selections = core_ops + tech_ops + secure_mods
-    selection = st.sidebar.selectbox("اختر القسم (متاح 70 قسم):", all_selections)
+with tab2:
+    st.info("نظام معالجة البيانات الضخمة جاهز للاستقبال.")
+    st.file_uploader("Upload Huge Datasets")
 
-    # --- 4. محتوى الموديولات (تفاعل حقيقي لكل نوع) ---
-
-    # النوع الأول: موديولات التشغيل والبيانات اليدوية
-    if selection == "🖥️ مركز القيادة الرئيسي":
-        st.markdown("<h1 class='module-header'>🌐 Global Operations Mission Control</h1>", unsafe_allow_html=True)
-        
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Production", "645K BPD", "+5%")
-        m2.metric("Efficiency", "98.2%", "Optimal")
-        m3.metric("Opex", "$11.40/Bbl", "-1.2%")
-        m4.metric("Active Assets", "142 Wells", "Stable")
-        df = pd.DataFrame({'Time': range(10), 'Flow': np.random.randint(5000, 7000, 10)})
-        st.plotly_chart(px.area(df, x='Time', y='Flow', title="Historical Production Trend"), use_container_width=True)
-
-    elif selection == "⌨️ مدخلات البيانات اليدوية":
-        st.markdown("<h1 class='module-header'>⌨️ Manual Field Data Entry</h1>", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
-            flow = st.number_input("معدل التدفق (BPD)", value=12000)
-            price = st.number_input("سعر البرميل اليوم ($)", value=84.5)
-        with c2:
-            water = st.slider("نسبة المياه والشوائب (%)", 0, 100, 10)
-            opex = st.number_input("تكلفة التشغيل اليومية ($)", value=35000)
-        
-        net_oil = flow * (1 - (water/100))
-        profit = (net_oil * price) - opex
-        st.divider()
-        res1, res2 = st.columns(2)
-        res1.metric("الإنتاج الصافي المحسوب", f"{net_oil:,.0f} Bbl")
-        res2.metric("صافي الربح المتوقع", f"${profit:,.0f}")
-
-    elif selection == "🏗️ محاكي الحفر 3D":
-        st.markdown("<h1 class='module-header'>🏗️ 3D Well Trajectory Simulation</h1>", unsafe_allow_html=True)
-        z = np.linspace(0, 15, 100)
-        fig = go.Figure(data=[go.Scatter3d(x=np.sin(z), y=np.cos(z), z=-z*1000, mode='lines', line=dict(color='#38bdf8', width=8))])
-        fig.update_layout(template="plotly_dark", height=700)
-        st.plotly_chart(fig, use_container_width=True)
-        
-
-    # النوع الثاني: موديولات تقنية (عرض معلومات احترافية)
-    elif "🧬 موديول تقني" in selection:
-        st.markdown(f"<h1 class='module-header'>{selection}</h1>", unsafe_allow_html=True)
-        st.info("يتم الآن معالجة البيانات من الحقل عبر الأقمار الصناعية.")
-        
-        st.write("### تقرير فني مؤقت:")
-        st.table(pd.DataFrame({'Parameter': ['Pressure', 'Temperature', 'Viscosity'], 'Value': ['2400 PSI', '180 F', '4.2 cP']}))
-
-    # النوع الثالث: موديولات الأرشفة والتأمين (هنا القوة)
-    else:
-        st.markdown(f"<h1 class='module-header'>{selection}</h1>", unsafe_allow_html=True)
-        st.warning("🔒 هذا القسم مشفر بالكامل (Level 5 Security Needed)")
-        st.image("https://cdn-icons-png.flaticon.com/512/2550/2550260.png", width=150)
-        st.markdown("""
-        **لماذا هذا الموديول مغلق؟**
-        * يتطلب ربط مباشر بخوادم الشركة الأم.
-        * يتم مزامنة البيانات يدوياً في نهاية كل ربع سنة.
-        * يحتوي على خرائط سرية للمكامن الجوفية غير المستكشفة.
-        """)
-
-# خروج
-st.sidebar.divider()
-if st.sidebar.button("🔒 تسجيل الخروج"):
-    st.session_state.auth = False
-    st.rerun()
+with tab3:
+    st.warning("هذه المنطقة محمية بتشفير 256-bit.")
+    st.text_area("Secure Notes / بيانات سرية")
