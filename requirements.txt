@@ -1,17 +1,1 @@
-
-numpy
-plotly
-streamlit
-pandas
-sqlalchemy
-openpyxl
-streamlit-mic-recorder
-pyyaml
-git init
-git add .
-git commit -m "Initial release of Multiphase Flow Simulator"
-git branch -M main
-git remote add origin [رابط المستودع الخاص بك]
-git push -u origin main
-
-
+matplotlib
