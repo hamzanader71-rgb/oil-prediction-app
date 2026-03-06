@@ -100,3 +100,11 @@ if st.button("Run Simulation"):
         ax[0].plot(dist, pres, color='blue'); ax[0].set_title("Pressure Profile (Bar)")
         ax[1].plot(dist, tmps, color='red'); ax[1].set_title("Temperature Profile (°C)")
         st.pyplot(fig)
+                # أضف هذا السطر في نهاية دالة __init__
+        self.master.after(600000, self.terminate_session) # 600,000 مللي ثانية = 10 دقائق
+
+    def terminate_session(self):
+        messagebox.showwarning("انتهت الجلسة", "انتهت العشر دقائق المسموحة لمعاينة البرنامج.")
+        self.master.destroy()
+        os._exit(0) # لضمان إغلاق كافة العمليات في الخلفية
+
