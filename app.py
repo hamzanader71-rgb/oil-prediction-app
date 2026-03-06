@@ -1,6 +1,25 @@
 import streamlit as st
 import math
 import matplotlib.pyplot as plt
+import time
+import os
+
+# -------------------- حماية البرنامج (10 دقائق) --------------------
+if "start_time" not in st.session_state:
+    st.session_state.start_time = time.time()
+
+elapsed_time = time.time() - st.session_state.start_time
+limit_seconds = 600  # 10 دقائق
+
+if elapsed_time > limit_seconds:
+    st.error("⚠️ انتهت صلاحية الجلسة التجريبية (10 دقائق).")
+    st.info("يرجى إغلاق البرنامج والتواصل مع المطور للمعاينة الكاملة.")
+    # منع تشغيل أي شيء آخر في الكود
+    st.stop()
+
+# إظهار عداد تنازلي بسيط في الجانب للتنبيه
+remaining = int(limit_seconds - elapsed_time)
+st.sidebar.warning(f"⏳ متبقي للمعاينة: {remaining // 60} دقيقة و {remaining % 60} ثانية")
 
 # -------------------- كلاس Fluid --------------------
 class Fluid:
@@ -66,6 +85,8 @@ class Pipe:
 st.set_page_config(page_title="Pipe Flow Simulator", layout="wide")
 st.title("🛢️ Advanced Multiphase Pipe Simulator")
 
+
+
 with st.sidebar:
     st.header("Fluid Properties")
     o = st.slider("Oil %", 0, 100, 80)
@@ -100,11 +121,3 @@ if st.button("Run Simulation"):
         ax[0].plot(dist, pres, color='blue'); ax[0].set_title("Pressure Profile (Bar)")
         ax[1].plot(dist, tmps, color='red'); ax[1].set_title("Temperature Profile (°C)")
         st.pyplot(fig)
-                # أضف هذا السطر في نهاية دالة __init__
-        self.master.after(600000, self.terminate_session) # 600,000 مللي ثانية = 10 دقائق
-
-    def terminate_session(self):
-        messagebox.showwarning("انتهت الجلسة", "انتهت العشر دقائق المسموحة لمعاينة البرنامج.")
-        self.master.destroy()
-        os._exit(0) # لضمان إغلاق كافة العمليات في الخلفية
-
