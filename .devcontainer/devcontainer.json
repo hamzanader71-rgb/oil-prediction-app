@@ -1,102 +1,456 @@
-import streamlit as st
-import math
-import matplotlib.pyplot as plt
+import javax.swing.*;
+import javax.swing.border.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.util.*;
 
-# -------------------- كلاس Fluid --------------------
-class Fluid:
-    def __init__(self, temperature=25, cp=2000, fractions=None, gas_M=0.018, gas_Z=1.0):
-        self.temperature = temperature
-        self.cp = cp
-        self.fractions = fractions if fractions else {"oil":0.8,"water":0.1,"gas":0.1}
-        self.rho_oil, self.rho_water = 850, 1000
-        self.mu_oil, self.mu_water, self.mu_gas = 0.05, 0.001, 0.000018
-        self.gas_M, self.gas_Z, self.R = gas_M, gas_Z, 8.314
-        self.rho_gas = 1.2
+// ======================== DATA MODELS (نفس الكود السابق مع تعديلات بسيطة) ========================
+class Product {
+    String id, name, expiryDate;
+    int quantity;
+    boolean isDamaged;
+    public Product(String id, String name, int quantity, String expiryDate) {
+        this.id = id; this.name = name; this.quantity = quantity; this.expiryDate = expiryDate; this.isDamaged = false;
+    }
+    public String toString() { return String.format("%s | %s | %d | %s | %s", id, name, quantity, expiryDate, isDamaged?"تالف":"سليم"); }
+}
 
-    def rho_mix(self):
-        return (self.fractions.get("oil",0)*self.rho_oil +
-                self.fractions.get("water",0)*self.rho_water +
-                self.fractions.get("gas",0)*self.rho_gas)
+abstract class User {
+    protected String id, username, password, name;
+    public User(String id, String username, String password, String name) {
+        this.id = id; this.username = username; this.password = password; this.name = name;
+    }
+    public boolean login(String uname, String pass) { return this.username.equals(uname) && this.password.equals(pass); }
+    public String getId() { return id; }
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
+    public String getName() { return name; }
+    public void setUsername(String username) { this.username = username; }
+    public void setPassword(String password) { this.password = password; }
+    public void setName(String name) { this.name = name; }
+    public abstract String getRoleName();
+}
 
-    def effective_mu(self):
-        return (self.fractions.get("oil",0)*self.mu_oil +
-                self.fractions.get("water",0)*self.mu_water +
-                self.fractions.get("gas",0)*self.mu_gas)
+class Admin extends User {
+    public Admin(String id, String username, String password, String name) { super(id, username, password, name); }
+    public String getRoleName() { return "Admin"; }
+}
 
-    def update_properties(self, P_Pa):
-        T_K = self.temperature + 273.15
-        P_Pa = max(P_Pa, 101325)
-        self.rho_gas = (P_Pa * self.gas_M) / (self.gas_Z * self.R * T_K)
+class InventoryEmployee extends User {
+    public InventoryEmployee(String id, String username, String password, String name) { super(id, username, password, name); }
+    public String getRoleName() { return "InventoryEmployee"; }
+}
 
-# -------------------- كلاس Pipe --------------------
-class Pipe:
-    def __init__(self, D_mm, L_m, U=10, T_amb=25, segments=100, elev=0):
-        self.D_mm, self.L_m, self.U, self.T_ambient = D_mm, L_m, U, T_amb
-        self.segments, self.elevation_change = segments, elev
+class MarketingEmployee extends User {
+    public MarketingEmployee(String id, String username, String password, String name) { super(id, username, password, name); }
+    public String getRoleName() { return "MarketingEmployee"; }
+}
 
-    def area(self): return math.pi * ((self.D_mm/1000)/2)**2
-    def velocity(self, Q_m3h): return (Q_m3h/3600) / self.area()
+class Seller extends User {
+    public Seller(String id, String username, String password, String name) { super(id, username, password, name); }
+    public String getRoleName() { return "Seller"; }
+}
 
-    def multiphase_pressure_drop(self, Q_m3h, fluid, inlet_P_Pa, JT=0.2):
-        segment_L = self.L_m / self.segments
-        P, T = inlet_P_Pa, fluid.temperature
-        pressures, temps, regimes = [P/100000], [T], []
+// ======================== SYSTEM DATA WITH FILE HANDLING ========================
+class SystemData {
+    ArrayList<User> users = new ArrayList<>();
+    ArrayList<Product> products = new ArrayList<>();
+    private static final String USERS_FILE = "users.txt";
+    private static final String PRODUCTS_FILE = "products.txt";
 
-        for _ in range(self.segments):
-            if P <= 101325: break
-            fluid.update_properties(P)
-            v = self.velocity(Q_m3h)
-            
-            # Flow Regime logic
-            g_frac = fluid.fractions.get("gas",0)
-            regime = "Stratified" if g_frac < 0.2 else "Slug" if g_frac < 0.5 else "Bubbly"
-            regimes.append(regime)
+    public void loadUsers() {
+        File f = new File(USERS_FILE);
+        if (!f.exists()) return;
+        try (Scanner sc = new Scanner(f)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                if (line.trim().isEmpty()) continue;
+                String[] p = line.split(",");
+                if (p.length >= 5) {
+                    String id = p[0], uname = p[1], pass = p[2], name = p[3], role = p[4];
+                    User u = null;
+                    switch (role) {
+                        case "Admin": u = new Admin(id, uname, pass, name); break;
+                        case "InventoryEmployee": u = new InventoryEmployee(id, uname, pass, name); break;
+                        case "MarketingEmployee": u = new MarketingEmployee(id, uname, pass, name); break;
+                        case "Seller": u = new Seller(id, uname, pass, name); break;
+                    }
+                    if (u != null) users.add(u);
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
 
-            # dP & dT
-            Re = (fluid.rho_mix() * v * (self.D_mm/1000)) / fluid.effective_mu()
-            f = 0.25/(math.log10((0.045/1000/(3.7*(self.D_mm/1000))) + (5.74/Re**0.9)))**2 if Re > 4000 else 64/Re
-            dP = (f*(segment_L/(self.D_mm/1000)))*(fluid.rho_mix()*v**2/2) + (fluid.rho_mix()*9.81*(self.elevation_change/self.segments))
-            
-            T += (-(self.U*math.pi*(self.D_mm/1000)*segment_L*(T-self.T_ambient))/(fluid.rho_mix()*v*self.area()*fluid.cp) - JT*(dP/100000))
-            P -= dP
-            pressures.append(P/100000); temps.append(T)
-        return pressures, temps, regimes[-1] if regimes else "N/A"
+    public void saveUsers() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(USERS_FILE))) {
+            for (User u : users) {
+                pw.printf("%s,%s,%s,%s,%s\n", u.getId(), u.getUsername(), u.getPassword(), u.getName(), u.getRoleName());
+            }
+        } catch (IOException e) { e.printStackTrace(); }
+    }
 
-# -------------------- Streamlit Interface --------------------
-st.set_page_config(page_title="Pipe Flow Simulator", layout="wide")
-st.title("🛢️ Advanced Multiphase Pipe Simulator")
+    public void loadProducts() {
+        File f = new File(PRODUCTS_FILE);
+        if (!f.exists()) return;
+        try (Scanner sc = new Scanner(f)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                if (line.trim().isEmpty()) continue;
+                String[] p = line.split(",");
+                if (p.length >= 5) {
+                    Product pr = new Product(p[0], p[1], Integer.parseInt(p[2]), p[3]);
+                    pr.isDamaged = Boolean.parseBoolean(p[4]);
+                    products.add(pr);
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
 
-with st.sidebar:
-    st.header("Fluid Properties")
-    o = st.slider("Oil %", 0, 100, 80)
-    w = st.slider("Water %", 0, 100, 10)
-    g = st.slider("Gas %", 0, 100, 10)
-    p_in = st.number_input("Inlet Pressure (Pa)", value=5000000)
-    t_in = st.number_input("Inlet Temp (C)", value=25.0)
+    public void saveProducts() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(PRODUCTS_FILE))) {
+            for (Product p : products) {
+                pw.printf("%s,%s,%d,%s,%b\n", p.id, p.name, p.quantity, p.expiryDate, p.isDamaged);
+            }
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public User authenticate(String uname, String pass) {
+        for (User u : users) if (u.login(uname, pass)) return u;
+        return null;
+    }
+
+    public void addUser(User u) { users.add(u); saveUsers(); }
+    public void addProduct(Product p) { products.add(p); saveProducts(); }
+    public void updateProduct() { saveProducts(); }
+}
+
+// ======================== GUI APPLICATION ========================
+public class Main extends JFrame {
+    private CardLayout cardLayout = new CardLayout();
+    private JPanel mainPanel = new JPanel(cardLayout);
+    private SystemData data = new SystemData();
+    private User currentUser;
+
+    // Panels
+    private JPanel loginPanel, adminPanel, inventoryPanel, marketingPanel, sellerPanel;
+    private JTextArea outputArea; // used for displaying lists
+
+    public Main() {
+        setTitle("نظام إدارة السوبر ماركت - Hyper Market");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(900, 600);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        
+        // Load data from files
+        data.loadUsers();
+        data.loadProducts();
+        if (data.users.isEmpty()) {
+            data.addUser(new Admin("A1", "admin", "admin123", "المدير العام"));
+        }
+        if (data.products.isEmpty()) {
+            data.addProduct(new Product("P1", "حليب", 50, "2025-01-01"));
+            data.addProduct(new Product("P2", "خبز", 5, "2025-04-30"));
+        }
+        
+        // Create panels
+        loginPanel = createLoginPanel();
+        adminPanel = createAdminPanel();
+        inventoryPanel = createInventoryPanel();
+        marketingPanel = createMarketingPanel();
+        sellerPanel = createSellerPanel();
+        
+        mainPanel.add(loginPanel, "login");
+        mainPanel.add(adminPanel, "admin");
+        mainPanel.add(inventoryPanel, "inventory");
+        mainPanel.add(marketingPanel, "marketing");
+        mainPanel.add(sellerPanel, "seller");
+        
+        add(mainPanel, BorderLayout.CENTER);
+        cardLayout.show(mainPanel, "login");
+        setVisible(true);
+    }
     
-    st.header("Pipe Geometry")
-    diam = st.number_input("Diameter (mm)", value=100.0)
-    length = st.number_input("Length (m)", value=2000.0)
-    elev = st.number_input("Elevation Change (m)", value=0.0)
-    flow = st.number_input("Flow Rate (m3/h)", value=50.0)
-
-if st.button("Run Simulation"):
-    if (o + w + g) != 100:
-        st.error("Error: Sum of fractions must be 100%")
-    else:
-        fluid = Fluid(temperature=t_in, fractions={"oil":o/100,"water":w/100,"gas":g/100})
-        pipe = Pipe(D_mm=diam, L_m=length, elev=elev)
-        pres, tmps, regime = pipe.multiphase_pressure_drop(flow, fluid, p_in)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Pressure Drop", f"{pres[0]-pres[-1]:.2f} Bar")
-            st.metric("Flow Regime", regime)
-        with col2:
-            st.metric("Final Temperature", f"{tmps[-1]:.2f} °C")
-
-        fig, ax = plt.subplots(1, 2, figsize=(12, 4))
-        dist = [i*(length/100) for i in range(len(pres))]
-        ax[0].plot(dist, pres, color='blue'); ax[0].set_title("Pressure Profile (Bar)")
-        ax[1].plot(dist, tmps, color='red'); ax[1].set_title("Temperature Profile (°C)")
-        st.pyplot(fig)
+    private JPanel createLoginPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        p.setBorder(BorderFactory.createTitledBorder("تسجيل الدخول"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10,10,10,10);
+        
+        JLabel userLabel = new JLabel("اسم المستخدم:");
+        JTextField userField = new JTextField(15);
+        JLabel passLabel = new JLabel("كلمة المرور:");
+        JPasswordField passField = new JPasswordField(15);
+        JButton loginBtn = new JButton("دخول");
+        
+        gbc.gridx=0; gbc.gridy=0; p.add(userLabel, gbc);
+        gbc.gridx=1; p.add(userField, gbc);
+        gbc.gridx=0; gbc.gridy=1; p.add(passLabel, gbc);
+        gbc.gridx=1; p.add(passField, gbc);
+        gbc.gridx=1; gbc.gridy=2; p.add(loginBtn, gbc);
+        
+        loginBtn.addActionListener(e -> {
+            String uname = userField.getText();
+            String pass = new String(passField.getPassword());
+            User u = data.authenticate(uname, pass);
+            if (u != null) {
+                currentUser = u;
+                String role = u.getRoleName();
+                switch (role) {
+                    case "Admin": cardLayout.show(mainPanel, "admin"); refreshAdminPanel(); break;
+                    case "InventoryEmployee": cardLayout.show(mainPanel, "inventory"); refreshInventoryPanel(); break;
+                    case "MarketingEmployee": cardLayout.show(mainPanel, "marketing"); refreshMarketingPanel(); break;
+                    case "Seller": cardLayout.show(mainPanel, "seller"); refreshSellerPanel(); break;
+                    default: cardLayout.show(mainPanel, "login");
+                }
+                userField.setText(""); passField.setText("");
+            } else {
+                JOptionPane.showMessageDialog(this, "اسم مستخدم أو كلمة مرور خاطئة");
+            }
+        });
+        return p;
+    }
+    
+    // ================= ADMIN PANEL =================
+    private JPanel createAdminPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel top = new JPanel(new FlowLayout());
+        JButton logoutBtn = new JButton("تسجيل خروج");
+        top.add(logoutBtn);
+        panel.add(top, BorderLayout.NORTH);
+        
+        JPanel center = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5,5,5,5);
+        gbc.gridx=0; gbc.gridy=0;
+        center.add(new JLabel("إضافة موظف جديد"), gbc);
+        gbc.gridy=1;
+        JTextField empId = new JTextField(10); JTextField empUser = new JTextField(10); JTextField empPass = new JTextField(10); JTextField empName = new JTextField(10);
+        String[] roles = {"Admin","InventoryEmployee","MarketingEmployee","Seller"};
+        JComboBox<String> roleCombo = new JComboBox<>(roles);
+        JButton addEmpBtn = new JButton("إضافة");
+        center.add(new JLabel("ID:")); center.add(empId);
+        center.add(new JLabel("Username:")); center.add(empUser);
+        center.add(new JLabel("Password:")); center.add(empPass);
+        center.add(new JLabel("Name:")); center.add(empName);
+        center.add(new JLabel("Role:")); center.add(roleCombo);
+        center.add(addEmpBtn);
+        
+        outputArea = new JTextArea(15,50);
+        outputArea.setEditable(false);
+        JScrollPane scroll = new JScrollPane(outputArea);
+        panel.add(center, BorderLayout.CENTER);
+        panel.add(scroll, BorderLayout.SOUTH);
+        
+        addEmpBtn.addActionListener(e -> {
+            String id = empId.getText(), uname = empUser.getText(), pass = empPass.getText(), name = empName.getText();
+            String role = (String)roleCombo.getSelectedItem();
+            User u = null;
+            switch (role) {
+                case "Admin": u = new Admin(id, uname, pass, name); break;
+                case "InventoryEmployee": u = new InventoryEmployee(id, uname, pass, name); break;
+                case "MarketingEmployee": u = new MarketingEmployee(id, uname, pass, name); break;
+                case "Seller": u = new Seller(id, uname, pass, name); break;
+            }
+            if (u != null) { data.addUser(u); JOptionPane.showMessageDialog(this, "تمت الإضافة"); refreshAdminPanel(); }
+            else JOptionPane.showMessageDialog(this, "خطأ");
+        });
+        logoutBtn.addActionListener(e -> { currentUser = null; cardLayout.show(mainPanel, "login"); });
+        return panel;
+    }
+    
+    private void refreshAdminPanel() {
+        StringBuilder sb = new StringBuilder("--- قائمة الموظفين ---\n");
+        for (User u : data.users) sb.append(u.getId()).append(" | ").append(u.getName()).append(" | ").append(u.getRoleName()).append("\n");
+        outputArea.setText(sb.toString());
+    }
+    
+    // ================= INVENTORY PANEL =================
+    private JPanel createInventoryPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel top = new JPanel(new FlowLayout());
+        JButton logoutBtn = new JButton("تسجيل خروج");
+        top.add(logoutBtn);
+        panel.add(top, BorderLayout.NORTH);
+        
+        JPanel form = new JPanel(new GridLayout(0,2,5,5));
+        form.setBorder(BorderFactory.createTitledBorder("إدارة المنتجات"));
+        JTextField prodId = new JTextField(10), prodName = new JTextField(10), prodQty = new JTextField(10), prodExp = new JTextField(10);
+        JButton addProdBtn = new JButton("إضافة منتج");
+        JButton restockBtn = new JButton("شراء (إعادة تخزين)");
+        JButton damageBtn = new JButton("تلف منتج");
+        JButton listBtn = new JButton("عرض المنتجات");
+        JButton notifyBtn = new JButton("تنبيهات المخزون");
+        
+        form.add(new JLabel("ID:")); form.add(prodId);
+        form.add(new JLabel("Name:")); form.add(prodName);
+        form.add(new JLabel("Quantity:")); form.add(prodQty);
+        form.add(new JLabel("Expiry Date:")); form.add(prodExp);
+        form.add(addProdBtn); form.add(restockBtn);
+        form.add(damageBtn); form.add(listBtn);
+        form.add(notifyBtn);
+        
+        outputArea = new JTextArea(15,50);
+        JScrollPane scroll = new JScrollPane(outputArea);
+        panel.add(form, BorderLayout.CENTER);
+        panel.add(scroll, BorderLayout.SOUTH);
+        
+        addProdBtn.addActionListener(e -> {
+            try {
+                Product p = new Product(prodId.getText(), prodName.getText(), Integer.parseInt(prodQty.getText()), prodExp.getText());
+                data.addProduct(p);
+                JOptionPane.showMessageDialog(this, "تمت إضافة المنتج");
+            } catch(Exception ex) { JOptionPane.showMessageDialog(this, "خطأ في البيانات"); }
+        });
+        
+        restockBtn.addActionListener(e -> {
+            String id = JOptionPane.showInputDialog(this, "أدخل ID المنتج لإعادة التخزين:");
+            if (id == null) return;
+            for (Product p : data.products) {
+                if (p.id.equals(id)) {
+                    String qtyStr = JOptionPane.showInputDialog(this, "الكمية المضافة:");
+                    if (qtyStr != null) {
+                        try { int qty = Integer.parseInt(qtyStr); p.quantity += qty; data.updateProduct(); JOptionPane.showMessageDialog(this, "تم التحديث"); } catch(Exception ex) {}
+                    }
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(this, "المنتج غير موجود");
+        });
+        
+        damageBtn.addActionListener(e -> {
+            String id = JOptionPane.showInputDialog(this, "ID المنتج التالف:");
+            if (id != null) {
+                for (Product p : data.products) if (p.id.equals(id)) { p.isDamaged = true; data.updateProduct(); JOptionPane.showMessageDialog(this, "تم"); return; }
+                JOptionPane.showMessageDialog(this, "غير موجود");
+            }
+        });
+        
+        listBtn.addActionListener(e -> {
+            StringBuilder sb = new StringBuilder("--- قائمة المنتجات ---\n");
+            for (Product p : data.products) sb.append(p).append("\n");
+            outputArea.setText(sb.toString());
+        });
+        
+        notifyBtn.addActionListener(e -> {
+            StringBuilder sb = new StringBuilder("--- التنبيهات ---\n");
+            for (Product p : data.products) {
+                if (p.quantity < 10) sb.append("⚠️ منتج: ").append(p.name).append(" - كمية قليلة: ").append(p.quantity).append("\n");
+                if (p.expiryDate.contains("2024")) sb.append("⏰ منتج: ").append(p.name).append(" - قارب على الانتهاء: ").append(p.expiryDate).append("\n");
+            }
+            outputArea.setText(sb.toString());
+        });
+        
+        logoutBtn.addActionListener(e -> { currentUser = null; cardLayout.show(mainPanel, "login"); });
+        return panel;
+    }
+    
+    private void refreshInventoryPanel() { /* could show list */ }
+    
+    // ================= MARKETING PANEL =================
+    private JPanel createMarketingPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel top = new JPanel(new FlowLayout());
+        JButton logoutBtn = new JButton("تسجيل خروج");
+        top.add(logoutBtn);
+        panel.add(top, BorderLayout.NORTH);
+        
+        JPanel center = new JPanel(new GridLayout(3,1));
+        JButton reportBtn = new JButton("توليد تقرير المنتجات (يحفظ في ملف)");
+        JButton offerBtn = new JButton("إنشاء عرض خاص");
+        center.add(reportBtn); center.add(offerBtn);
+        
+        outputArea = new JTextArea(15,50);
+        JScrollPane scroll = new JScrollPane(outputArea);
+        panel.add(center, BorderLayout.CENTER);
+        panel.add(scroll, BorderLayout.SOUTH);
+        
+        reportBtn.addActionListener(e -> {
+            try (PrintWriter pw = new PrintWriter(new FileWriter("report.txt"))) {
+                pw.println("========== تقرير المخزون ==========");
+                for (Product p : data.products) pw.println(p);
+                pw.println("====================================");
+                outputArea.setText("تم حفظ التقرير في ملف report.txt");
+                JOptionPane.showMessageDialog(this, "تم حفظ التقرير");
+            } catch (Exception ex) { outputArea.setText("خطأ في الكتابة"); }
+        });
+        
+        offerBtn.addActionListener(e -> {
+            String offer = JOptionPane.showInputDialog(this, "أدخل تفاصيل العرض:");
+            if (offer != null) outputArea.setText("تم إنشاء العرض: " + offer);
+        });
+        
+        logoutBtn.addActionListener(e -> { currentUser = null; cardLayout.show(mainPanel, "login"); });
+        return panel;
+    }
+    
+    private void refreshMarketingPanel() { }
+    
+    // ================= SELLER PANEL =================
+    private JPanel createSellerPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel top = new JPanel(new FlowLayout());
+        JButton logoutBtn = new JButton("تسجيل خروج");
+        top.add(logoutBtn);
+        panel.add(top, BorderLayout.NORTH);
+        
+        JPanel form = new JPanel(new GridLayout(0,2,5,5));
+        form.setBorder(BorderFactory.createTitledBorder("عملية بيع"));
+        JTextField sellId = new JTextField(10), sellQty = new JTextField(10);
+        JButton sellBtn = new JButton("بيع");
+        JButton listBtn = new JButton("عرض المنتجات المتاحة");
+        JButton searchBtn = new JButton("بحث عن منتج");
+        form.add(new JLabel("Product ID:")); form.add(sellId);
+        form.add(new JLabel("Quantity:")); form.add(sellQty);
+        form.add(sellBtn); form.add(listBtn);
+        form.add(searchBtn);
+        
+        outputArea = new JTextArea(15,50);
+        JScrollPane scroll = new JScrollPane(outputArea);
+        panel.add(form, BorderLayout.CENTER);
+        panel.add(scroll, BorderLayout.SOUTH);
+        
+        sellBtn.addActionListener(e -> {
+            String id = sellId.getText();
+            int qty;
+            try { qty = Integer.parseInt(sellQty.getText()); } catch(Exception ex) { JOptionPane.showMessageDialog(this, "كمية غير صحيحة"); return; }
+            for (Product p : data.products) {
+                if (p.id.equals(id)) {
+                    if (!p.isDamaged && p.quantity >= qty) {
+                        p.quantity -= qty;
+                        data.updateProduct();
+                        outputArea.setText("تم بيع " + qty + " من " + p.name);
+                        JOptionPane.showMessageDialog(this, "تمت عملية البيع");
+                    } else { JOptionPane.showMessageDialog(this, "كمية غير متوفرة أو المنتج تالف"); }
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(this, "منتج غير موجود");
+        });
+        
+        listBtn.addActionListener(e -> {
+            StringBuilder sb = new StringBuilder("--- المنتجات المتاحة للبيع ---\n");
+            for (Product p : data.products) if (!p.isDamaged && p.quantity>0) sb.append(p).append("\n");
+            outputArea.setText(sb.toString());
+        });
+        
+        searchBtn.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog(this, "اسم المنتج:");
+            if (name != null) {
+                StringBuilder sb = new StringBuilder("نتائج البحث:\n");
+                for (Product p : data.products) if (p.name.toLowerCase().contains(name.toLowerCase())) sb.append(p).append("\n");
+                outputArea.setText(sb.length()>0 ? sb.toString() : "لا توجد نتائج");
+            }
+        });
+        
+        logoutBtn.addActionListener(e -> { currentUser = null; cardLayout.show(mainPanel, "login"); });
+        return panel;
+    }
+    
+    private void refreshSellerPanel() { }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new Main());
+    }
+}
